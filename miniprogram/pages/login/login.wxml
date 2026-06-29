@@ -1,0 +1,49 @@
+<!--pages/login/login.wxml-->
+<view class="login-container">
+  <!-- Logo 区域 -->
+  <view class="logo-area">
+    <view class="logo">
+      <text class="logo-text">😴</text>
+    </view>
+    <text class="app-name">SleepCare</text>
+    <text class="app-desc">智能睡眠健康管理</text>
+  </view>
+
+  <!-- 登录表单 -->
+  <view class="login-form">
+    <view class="form-item">
+      <input
+        class="input-field"
+        type="number"
+        placeholder="请输入手机号"
+        maxlength="11"
+        value="{{phone}}"
+        bindinput="onPhoneInput"
+      />
+    </view>
+
+    <view class="form-item">
+      <input
+        class="input-field"
+        type="text"
+        password="{{true}}"
+        placeholder="请输入密码"
+        value="{{password}}"
+        bindinput="onPasswordInput"
+      />
+    </view>
+
+    <button
+      class="btn-login {{loading ? 'disabled' : ''}}"
+      disabled="{{loading}}"
+      bindtap="onLogin"
+    >
+      {{loading ? '登录中...' : '登 录'}}
+    </button>
+  </view>
+
+  <!-- 提示信息 -->
+  <view class="tips" wx:if="{{errorMsg}}">
+    <text class="error-text">{{errorMsg}}</text>
+  </view>
+</view>

@@ -1,0 +1,48 @@
+<!--pages/devices/devices.wxml-->
+<view class="devices-container">
+  <!-- 页面头部 -->
+  <view class="page-header">
+    <text class="header-title">我的设备</text>
+    <text class="header-count">共 {{deviceList.length}} 台设备</text>
+  </view>
+
+  <!-- 设备列表 -->
+  <view class="device-list" wx:if="{{deviceList.length > 0}}">
+    <view
+      class="device-card"
+      wx:for="{{deviceList}}"
+      wx:key="id"
+    >
+      <!-- 设备图标 -->
+      <view class="device-icon {{item.status === '在线' ? 'online' : 'offline'}}">
+        <text class="icon-text">{{item.status === '在线' ? '●' : '○'}}</text>
+      </view>
+
+      <!-- 设备信息 -->
+      <view class="device-info">
+        <text class="device-name">{{item.device_name}}</text>
+        <text class="device-serial">序列号：{{item.serial_no}}</text>
+        <text class="device-time">{{item.created_at}}</text>
+      </view>
+
+      <!-- 在线状态标签 -->
+      <view class="status-tag {{item.status === '在线' ? 'tag-online' : 'tag-offline'}}">
+        <text>{{item.status}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && deviceList.length === 0}}">
+    <view class="empty-icon">
+      <text class="empty-emoji">📱</text>
+    </view>
+    <text class="empty-text">暂无已绑定设备</text>
+    <text class="empty-hint">请先添加智能穿戴设备</text>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+</view>

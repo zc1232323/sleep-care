@@ -1,0 +1,91 @@
+/* pages/login/login.wxss */
+.login-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #1a73e8 0%, #4a90d9 40%, #f5f5f5 45%);
+  padding: 0 50rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 180rpx;
+  padding-bottom: 100rpx;
+}
+
+.logo {
+  width: 160rpx;
+  height: 160rpx;
+  margin-bottom: 30rpx;
+  border-radius: 32rpx;
+  background: linear-gradient(135deg, #4a90d9, #1a73e8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-text {
+  font-size: 80rpx;
+}
+
+.app-name {
+  font-size: 52rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 4rpx;
+}
+
+.app-desc {
+  font-size: 26rpx;
+  color: rgba(255,255,255,0.8);
+  margin-top: 12rpx;
+}
+
+.login-form {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 50rpx 36rpx;
+  box-shadow: 0 8rpx 30rpx rgba(0,0,0,0.08);
+}
+
+.form-item {
+  margin-bottom: 30rpx;
+}
+
+.input-field {
+  height: 96rpx;
+  background: #f7f8fa;
+  border-radius: 16rpx;
+  padding: 0 30rpx;
+  font-size: 30rpx;
+  color: #333;
+}
+
+.btn-login {
+  margin-top: 20rpx;
+  height: 96rpx;
+  line-height: 96rpx;
+  background: linear-gradient(135deg, #1a73e8, #4a90d9);
+  color: #fff;
+  font-size: 34rpx;
+  font-weight: 600;
+  border-radius: 48rpx;
+  text-align: center;
+  letter-spacing: 6rpx;
+}
+
+.btn-login.disabled {
+  opacity: 0.6;
+}
+
+.tips {
+  margin-top: 40rpx;
+  text-align: center;
+}
+
+.error-text {
+  color: #e53935;
+  font-size: 26rpx;
+}
