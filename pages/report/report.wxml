@@ -1,4 +1,5 @@
-<!--pages/report/report.wxml - 睡眠分期报告页（第5大节）-->
+<!--pages/report/report.wxml - 睡眠报告页（第5+6大节）-->
+<!-- 分期柱状图 + 噪音折线图（纯View实现，不依赖Canvas）-->
 <view class="report-container">
   <!-- 日期选择器 -->
   <view class="date-picker-bar">
@@ -10,10 +11,13 @@
       </view>
     </picker>
     <text class="refresh-tip" wx:if="{{loading}}">加载中...</text>
-    <text class="data-source" wx:if="{{dataSource}}">({{dataSource}})</text>
+    <view class="source-tags" wx:if="{{stageSource || noiseSource}}">
+      <text class="src-tag" wx:if="{{stageSource}}">分期:{{stageSource}}</text>
+      <text class="src-tag" wx:if="{{noiseSource}}">噪音:{{noiseSource}}</text>
+    </view>
   </view>
 
-  <!-- 图例说明 -->
+  <!-- ====== 图例（分期）====== -->
   <view class="legend-bar">
     <view class="legend-item"><view class="legend-dot dot-awake"></view><text>清醒</text></view>
     <view class="legend-item"><view class="legend-dot dot-light"></view><text>浅睡</text></view>
@@ -21,13 +25,96 @@
     <view class="legend-item"><view class="legend-dot dot-rem"></view><text>REM</text></view>
   </view>
 
-  <!-- ECharts 图表 -->
-  <view class="chart-wrapper">
-    <ec-canvas
-      id="sleep-stages-chart"
-      canvas-id="stages-canvas"
-      bind:init="initChart"
-    ></ec-canvas>
+  <!-- ====== 分期柱状图（第5大节）====== -->
+  <view class="chart-wrapper" wx:if="{{stagesData}}">
+    <view class="chart-title">睡眠分期曲线</view>
+    <view class="chart-body">
+      <view class="y-axis">
+        <view class="y-label"><text>REM</text></view>
+        <view class="y-label"><text>深睡</text></view>
+        <view class="y-label"><text>浅睡</text></view>
+        <view class="y-label"><text>清醒</text></view>
+      </view>
+      <view class="chart-area">
+        <view class="chart-grid">
+          <view class="grid-line"></view>
+          <view class="grid-line"></view>
+          <view class="grid-line"></view>
+          <view class="grid-line"></view>
+          <view class="bars-container">
+            <block wx:for="{{stagesData}}" wx:key="time">
+              <view class="bar-col">
+                <view class="bar {{item.stageClass}}" style="height: {{item.barHeightRpx}}rpx;"></view>
+              </view>
+            </block>
+          </view>
+        </view>
+        <view class="x-axis">
+          <block wx:for="{{xLabels}}" wx:key="*this">
+            <text class="x-label">{{item}}</text>
+          </block>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 噪音折线图（第6大节）====== -->
+  <view class="chart-wrapper" wx:if="{{noiseData}}">
+    <view class="chart-title noise-title">环境噪音监测</view>
+    <!-- Y轴标签 (dB) -->
+    <view class="noise-chart-body">
+      <view class="noise-y-axis">
+        <view class="ny-label"><text>70</text></view>
+        <view class="ny-label"><text>55</text></view>
+        <view class="ny-label"><text>40</text></view>
+        <view class="ny-label"><text>25</text></view>
+      </view>
+      <view class="noise-chart-area">
+        <view class="n-grid">
+          <!-- 网格线 + 面积填充 + 折线 -->
+          <view class="n-grid-line"></view>
+          <view class="n-grid-line"></view>
+          <view class="n-grid-line"></view>
+          <view class="n-grid-line"></view>
+
+          <!-- 面积填充层 -->
+          <svg class="n-area-svg">
+            <polygon points="{{noiseAreaPoints}}" fill="url(#noiseGradient)" opacity="0.3"/>
+            <defs>
+              <linearGradient id="noiseGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#ff922b;stop-opacity:0.8"/>
+                <stop offset="100%" style="stop-color:#ff922b;stop-opacity:0.05"/>
+              </linearGradient>
+            </defs>
+          </svg>
+
+          <!-- 折线数据点容器：用 view 模拟折线 -->
+          <view class="n-line-container">
+            <block wx:for="{{noiseData}}" wx:key="time">
+              <!-- 数据点 -->
+              <view class="n-dot {{item.period === 'night' ? 'dot-night' : 'dot-day'}}"
+                    style="bottom: {{item.pctHeight}}%;"
+                    wx:if="{{index % 6 === 0}}">
+              </view>
+              <!-- 连接线段（每两个相邻点之间用细线连接） -->
+              <block wx:if="{{index > 0 && index % 6 === 0}}">
+                <view class="n-seg"
+                      style="left:{{(index / noiseData.length) * 100}}%; bottom:{{(noiseData[index].pctHeight + noiseData[index-1].pctHeight)/2}}%; height:{{Math.abs(noiseData[index].pctHeight - noiseData[index-1].pctHeight)}}%; transform-origin:center;">
+                </view>
+              </block>
+            </block>
+          </view>
+        </view>
+        <!-- X轴时间标签 -->
+        <view class="n-x-axis">
+          <block wx:for="{{noiseXLabels}}" wx:key="*this">
+            <text class="nx-label">{{item}}</text>
+          </block>
+        </view>
+        <!-- 单位标注 -->
+        <view class="n-unit"><text>单位: dB</text></view>
+      </view>
+    </view>
   </view>
 
   <!-- 统计摘要 -->
@@ -56,13 +143,13 @@
   </view>
 
   <!-- 空状态 -->
-  <view class="empty-state" wx:if="{{!loading && !stagesData && !error}}">
+  <view class="empty-state" wx:if="{{!loading && !stagesData && !noiseData && !error}}">
     <text class="empty-text">暂无数据，请选择日期查看</text>
   </view>
 
-  <!-- 错误提示 -->
+  <!-- 错误 -->
   <view class="error-state" wx:if="{{error}}">
     <text class="error-text">{{error}}</text>
-    <button class="retry-btn" bindtap="loadStages" size="mini">重试</button>
+    <button class="retry-btn" bindtap="loadData" size="mini">重试</button>
   </view>
 </view>

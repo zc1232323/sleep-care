@@ -271,8 +271,6 @@ router.get('/daily', async (req, res) => {
   }
 });
 
-module.exports = router;
-
 // ============================================================
 // 第5大节：睡眠分期 API（GET /api/sleep/stages）
 // ============================================================
@@ -318,7 +316,8 @@ router.get('/stages', async (req, res) => {
       deviceId = deviceRow[0].values[0][0];
     }
 
-    // 3. 查询是否已有该日期的报告（含 sleep_stages_json）
+    // 3. 查询是否已有该日期的报告记录
+    let existingReportId = null;
     const existing = db.exec(
       'SELECT id, sleep_stages_json FROM sleep_reports WHERE user_id = ? AND device_id = ? AND report_date = ?',
       [userId, deviceId, dateStr]
@@ -327,14 +326,16 @@ router.get('/stages', async (req, res) => {
     // 4. 已有分期数据 → 直接解析返回
     if (existing.length > 0 && existing[0].values.length > 0) {
       const row = existing[0].values[0];
+      existingReportId = row[0];
       const stagesJson = row[1];
       if (stagesJson) {
         try {
           const parsedStages = typeof stagesJson === 'string' ? JSON.parse(stagesJson) : stagesJson;
 
-          // 如果是旧格式的 stage 对象数组，转换为新的 48 点格式
+          // 判断是否为旧格式（旧格式：stage 值是字符串如 "awake"/"light"；新格式：stage 值是数字 0/1/2/3）
           if (Array.isArray(parsedStages) && parsedStages.length > 0 &&
-              typeof parsedStages[0] === 'object' && 'stage' in parsedStages[0]) {
+              typeof parsedStages[0] === 'object' && 'stage' in parsedStages[0] &&
+              typeof parsedStages[0].stage === 'string') {
             // 旧格式 → 转换为 48 点格式并更新
             const stages48 = generate48StagePoints(userId, deviceId, dateStr);
             db.run(
@@ -365,34 +366,32 @@ router.get('/stages', async (req, res) => {
     // 5. 无数据或格式异常 → 生成 48 个分期数据点
     const stages48 = generate48StagePoints(userId, deviceId, dateStr);
 
-    // 6. 写入数据库
-    try {
+    // 6. 写入数据库（关键：UPDATE 匹配 0 行不报错，必须分情况处理）
+    if (existingReportId) {
+      // 已有报告行 → UPDATE sleep_stages_json
       db.run(
-        `UPDATE sleep_reports SET sleep_stages_json = ?
-         WHERE user_id = ? AND device_id = ? AND report_date = ?`,
-        [JSON.stringify(stages48), userId, deviceId, dateStr]
+        'UPDATE sleep_reports SET sleep_stages_json = ? WHERE id = ?',
+        [JSON.stringify(stages48), existingReportId]
       );
-    } catch (updateErr) {
-      // 如果该日期还没有报告记录，先 INSERT 一条
-      if (updateErr.message && updateErr.message.includes('no such row')) {
-        const baseData = generateReportData(userId, deviceId, dateStr);
-        baseData.sleep_stages_json = JSON.stringify(stages48);
+    } else {
+      // 无报告行 → INSERT 新记录
+      const baseData = generateReportData(userId, deviceId, dateStr);
+      baseData.sleep_stages_json = JSON.stringify(stages48);
 
-        db.run(
-          `INSERT INTO sleep_reports
-             (user_id, device_id, report_date, sleep_score, total_sleep_minutes,
-              deep_sleep_minutes, light_sleep_minutes, rem_sleep_minutes,
-              awake_minutes, awake_count, heart_rate_json, sleep_stages_json, noise_json)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            userId, deviceId, dateStr,
-            baseData.sleep_score, baseData.total_sleep_minutes,
-            baseData.deep_sleep_minutes, baseData.light_sleep_minutes, baseData.rem_sleep_minutes,
-            baseData.awake_minutes, baseData.awake_count,
-            baseData.heart_rate_json, baseData.sleep_stages_json, baseData.noise_json
-          ]
-        );
-      }
+      db.run(
+        `INSERT INTO sleep_reports
+           (user_id, device_id, report_date, sleep_score, total_sleep_minutes,
+            deep_sleep_minutes, light_sleep_minutes, rem_sleep_minutes,
+            awake_minutes, awake_count, heart_rate_json, sleep_stages_json, noise_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          userId, deviceId, dateStr,
+          baseData.sleep_score, baseData.total_sleep_minutes,
+          baseData.deep_sleep_minutes, baseData.light_sleep_minutes, baseData.rem_sleep_minutes,
+          baseData.awake_minutes, baseData.awake_count,
+          baseData.heart_rate_json, baseData.sleep_stages_json, baseData.noise_json
+        ]
+      );
     }
 
     // 7. 持久化到磁盘
@@ -471,3 +470,191 @@ function generate48StagePoints(userId, deviceId, dateStr) {
 
   return stages;
 }
+
+// ============================================================
+// 第6大节：噪音数据 API（GET /api/sleep/noise）
+// ============================================================
+
+/**
+ * @api {get} /api/sleep/noise 获取噪音数据（144个数据点）
+ * @apiHeader {String} Authorization Bearer JWT Token
+ * @apiParam {String} [date] 查询日期 YYYY-MM-DD，默认昨天
+ * @apiSuccess {Object[]} data.noises 144个噪音数据点 [{time, value, period}, ...]
+ * @apiSuccess {Number}   data.count 数据点数量（固定144）
+ * @apiSuccess {String}   data.source "generated" | "db"
+ *
+ * 逻辑：
+ *   1. 查询 sleep_reports 表该日期的 noise_json 字段
+ *   2. 若存在且为新格式 → 直接返回 (source: "db")
+ *   3. 若不存在或旧格式 → 生成 144 个噪音数据点 → UPDATE/INSERT → saveDb → 返回 (source: "generated")
+ *
+ * 噪音规则：
+ *   - 夜间 22:00~06:00：30-40 dB（安静睡眠环境）
+ *   - 白天 06:00~22:00：45-65 dB（正常环境噪音）
+ *   - 过渡平滑处理（相邻点差值不超过 3dB）
+ */
+router.get('/noise', async (req, res) => {
+  const userId = req.user.id;
+
+  // 1. 日期处理
+  let dateStr = req.query.date;
+  if (!dateStr) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    dateStr = yesterday.toISOString().split('T')[0];
+  }
+
+  try {
+    const db = await getDb();
+
+    // 2. 获取设备 ID
+    let deviceId = 0;
+    const deviceRow = db.exec(
+      'SELECT id FROM devices WHERE user_id = ? ORDER BY created_at ASC LIMIT 1',
+      [userId]
+    );
+    if (deviceRow.length > 0 && deviceRow[0].values.length > 0) {
+      deviceId = deviceRow[0].values[0][0];
+    }
+
+    // 3. 查询是否已有该日期的报告记录
+    let existingReportId = null;
+    const existing = db.exec(
+      'SELECT id, noise_json FROM sleep_reports WHERE user_id = ? AND device_id = ? AND report_date = ?',
+      [userId, deviceId, dateStr]
+    );
+
+    // 4. 已有噪音数据 → 解析返回
+    if (existing.length > 0 && existing[0].values.length > 0) {
+      const row = existing[0].values[0];
+      existingReportId = row[0];
+      const noiseJson = row[1];
+
+      if (noiseJson) {
+        try {
+          const parsedNoise = typeof noiseJson === 'string' ? JSON.parse(noiseJson) : noiseJson;
+
+          // 新格式（144点数组，每项有 time/value/period）
+          if (Array.isArray(parsedNoise) && parsedNoise.length >= 100 &&
+              typeof parsedNoise[0] === 'object' && 'value' in parsedNoise[0]) {
+            return res.json({
+              code: 0,
+              message: 'success',
+              data: { noises: parsedNoise, count: parsedNoise.length, source: 'db' }
+            });
+          }
+        } catch (parseErr) {
+          console.warn('[Noise] JSON 解析失败，将重新生成:', parseErr.message);
+        }
+      }
+    }
+
+    // 5. 无数据或格式异常 → 生成 144 个噪音数据点
+    const noises144 = generate144NoisePoints(userId, deviceId, dateStr);
+
+    // 6. 写入数据库
+    const noiseJsonStr = JSON.stringify(noises144);
+
+    if (existingReportId) {
+      db.run('UPDATE sleep_reports SET noise_json = ? WHERE id = ?', [noiseJsonStr, existingReportId]);
+    } else {
+      // 无报告行 → INSERT
+      const baseData = generateReportData(userId, deviceId, dateStr);
+      baseData.noise_json = noiseJsonStr;
+
+      db.run(
+        `INSERT INTO sleep_reports
+           (user_id, device_id, report_date, sleep_score, total_sleep_minutes,
+            deep_sleep_minutes, light_sleep_minutes, rem_sleep_minutes,
+            awake_minutes, awake_count, heart_rate_json, sleep_stages_json, noise_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          userId, deviceId, dateStr,
+          baseData.sleep_score, baseData.total_sleep_minutes,
+          baseData.deep_sleep_minutes, baseData.light_sleep_minutes, baseData.rem_sleep_minutes,
+          baseData.awake_minutes, baseData.awake_count,
+          baseData.heart_rate_json, baseData.sleep_stages_json, noiseJsonStr
+        ]
+      );
+    }
+
+    // 7. 持久化到磁盘
+    saveDb();
+
+    return res.json({
+      code: 0,
+      message: 'success',
+      data: { noises: noises144, count: 144, source: 'generated' }
+    });
+
+  } catch (err) {
+    console.error('[Noise] 获取噪音数据失败:', err);
+    res.json({ code: 1001, message: '获取噪音数据失败', data: null });
+  }
+});
+
+/**
+ * 生成 144 个噪音数据点
+ * 每个点代表约 5 分钟的噪音水平
+ *
+ * 规则：
+ *   - 夜间 22:00~06:00：30-40 dB（安静睡眠环境）
+ *   - 白天 06:00~22:00：45-65 dB（正常环境噪音）
+ *   - 相邻点平滑过渡（差值不超过 3dB）
+ *
+ * @param {number} userId 用户ID
+ * @param {number} deviceId 设备ID
+ * @param {string} dateStr 日期字符串
+ * @returns {Array} 144个噪音数据点 [{time, value, period}, ...]
+ */
+function generate144NoisePoints(userId, deviceId, dateStr) {
+  const seed = `${userId}_${deviceId}${dateStr}_noise`;
+  const rand = createSeededRandom(seed);
+
+  const noises = [];
+  const startTime = new Date(`${dateStr}T20:00:00`); // 从20:00开始，覆盖夜间+白天
+
+  for (let i = 0; i < 144; i++) {
+    const pointTime = new Date(startTime.getTime() + i * 300000); // 每5分钟一个点
+    const hour = pointTime.getHours();
+    const minute = pointTime.getMinutes();
+    const timeLabel = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+
+    // 判断时间段
+    let period, baseDbMin, baseDbMax;
+
+    if (hour >= 22 || hour < 6) {
+      // 夜间 22:00-06:00：安静 30-40dB
+      period = 'night';
+      baseDbMin = 30;
+      baseDbMax = 40;
+    } else {
+      // 白天 06:00-22:00：正常 45-65dB
+      period = 'day';
+      baseDbMin = 45;
+      baseDbMax = 65;
+    }
+
+    // 在范围内随机取值
+    const rawValue = baseDbMin + rand() * (baseDbMax - baseDbMin);
+    let value = Math.round(rawValue * 10) / 10; // 保留1位小数
+
+    // 平滑过渡：与前一个点的差值不超过 3dB
+    if (i > 0) {
+      const prevValue = noises[i - 1].value;
+      const diff = value - prevValue;
+      if (Math.abs(diff) > 3) {
+        value = prevValue + (diff > 0 ? 3 : -3);
+        // 确保不超出范围
+        value = Math.max(baseDbMin, Math.min(baseDbMax, value));
+        value = Math.round(value * 10) / 10;
+      }
+    }
+
+    noises.push({ time: timeLabel, value: value, period: period });
+  }
+
+  return noises;
+}
+
+module.exports = router;

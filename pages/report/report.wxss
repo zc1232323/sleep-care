@@ -1,176 +1,129 @@
-/* pages/report/report.wxss - 睡眠分期报告页样式 */
+/* pages/report/report.wxss - 第5+6大节（分期柱状图 + 噪音折线图） */
 
-.report-container {
-  min-height: 100vh;
-  background: #f5f7fa;
-  padding: 0 20rpx;
-}
+.report-container { min-height: 100vh; background: #f5f7fa; padding: 0 20rpx; }
 
-/* ========== 日期选择器 ========== */
-.date-picker-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24rpx 0;
-  gap: 16rpx;
-}
+/* ====== 日期选择器 ====== */
+.date-picker-bar { display: flex; align-items: center; justify-content: center; padding: 24rpx 0; gap: 16rpx; flex-wrap: wrap; }
+.date-btn { display: flex; align-items: center; gap: 12rpx; background: #fff; border: 2rpx solid #e0e0e0; border-radius: 40rpx; padding: 16rpx 32rpx; }
+.date-icon { font-size: 28rpx; }
+.date-text { font-size: 30rpx; color: #1a73e8; font-weight: 600; }
+.date-arrow { font-size: 20rpx; color: #999; }
+.refresh-tip { font-size: 24rpx; color: #1a73e8; animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-.date-btn {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  background: #fff;
-  border: 2rpx solid #e0e0e0;
-  border-radius: 40rpx;
-  padding: 16rpx 32rpx;
-}
+.source-tags { display: flex; gap: 8rpx; }
+.src-tag { font-size: 20rpx; color: #666; background: #f0f0f0; padding: 4rpx 14rpx; border-radius: 16rpx; }
 
-.date-icon {
-  font-size: 28rpx;
-}
-
-.date-text {
-  font-size: 30rpx;
-  color: #1a73e8;
-  font-weight: 600;
-}
-
-.date-arrow {
-  font-size: 20rpx;
-  color: #999;
-}
-
-.refresh-tip {
-  font-size: 24rpx;
-  color: #1a73e8;
-  animation: pulse 1.2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-.data-source {
-  font-size: 22rpx;
-  color: #999;
-  background: #f0f0f0;
-  padding: 4rpx 16rpx;
-  border-radius: 20rpx;
-}
-
-/* ========== 图例 ========== */
-.legend-bar {
-  display: flex;
-  justify-content: center;
-  gap: 30rpx;
-  padding: 16rpx 0 24rpx;
-  flex-wrap: wrap;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-}
-
-.legend-dot {
-  width: 20rpx;
-  height: 20rpx;
-  border-radius: 50%;
-}
-
+/* ====== 图例 ====== */
+.legend-bar { display: flex; justify-content: center; gap: 30rpx; padding: 16rpx 0 20rpx; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 8rpx; }
+.legend-dot { width: 20rpx; height: 20rpx; border-radius: 50%; }
 .dot-awake { background: #ff6b6b; }
 .dot-light { background: #51cf66; }
-.dot-deep { background: #339af0; }
-.dot-rem { background: #cc5de8; }
+.dot-deep  { background: #339af0; }
+.dot-rem   { background: #cc5de8; }
+legend-item text { font-size: 24rpx; color: #666; }
 
-legend-item text {
-  font-size: 24rpx;
-  color: #666;
-}
-
-/* ========== ECharts 图表 ========== */
+/* ====== 通用图表容器 ====== */
 .chart-wrapper {
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 20rpx;
+  background: #fff; border-radius: 20rpx;
+  padding: 20rpx 12rpx 16rpx;
   box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
   margin-bottom: 24rpx;
 }
+.chart-title { text-align: center; font-size: 28rpx; font-weight: 700; color: #333; margin-bottom: 10rpx; }
 
-ec-canvas {
+/* ====== 分期柱状图（第5节）====== */
+.chart-body { display: flex; flex-direction: row; }
+.y-axis { width: 52rpx; display: flex; flex-direction: column; justify-content: space-between; flex-shrink: 0; }
+.y-label { height: 85rpx; display: flex; align-items: center; justify-content: flex-end; padding-right: 4rpx; }
+.y-label text { font-size: 18rpx; color: #888; }
+.chart-area { flex: 1; display: flex; flex-direction: column; }
+.chart-grid { position: relative; display: flex; flex-direction: row; align-items: flex-end; height: 340rpx; border-left: 1rpx solid #eee; border-bottom: 2rpx solid #ccc; }
+.grid-line { position: absolute; left: 0; right: 0; height: 1rpx; background: #eee; z-index: 0; }
+.grid-line:nth-child(1) { top: 0; }
+.grid-line:nth-child(2) { top: 85rpx; }
+.grid-line:nth-child(3) { top: 170rpx; }
+.grid-line:nth-child(4) { top: 255rpx; }
+.bars-container { display: flex; flex-direction: row; align-items: flex-end; width: 100%; height: 100%; position: relative; z-index: 1; padding: 0 2rpx; box-sizing: border-box; }
+.bar-col { flex: 1; display: flex; align-items: flex-end; justify-content: center; height: 100%; }
+.bar { width: 80%; border-radius: 3rpx 3rpx 0 0; min-height: 12rpx; }
+.bar-awake { background: #ff6b6b; }
+.bar-light { background: #51cf66; }
+.bar-deep  { background: #339af0; }
+.bar-rem   { background: #cc5de8; }
+.x-axis { display: flex; flex-direction: row; justify-content: space-around; padding-top: 10rpx; height: 36rpx; }
+.x-label { font-size: 18rpx; color: #aaa; flex: 1; text-align: center; }
+
+/* ====== 噪音折线图（第6节）====== */
+.noise-title { color: #e67700 !important; } /* 橙色标题区分 */
+
+.noise-chart-body { display: flex; flex-direction: row; }
+
+/* Y轴 (dB) */
+.noise-y-axis { width: 52rpx; display: flex; flex-direction: column; justify-content: space-between; flex-shrink: 0; padding: 4rpx 0; }
+.ny-label { height: 75rpx; display: flex; align-items: center; justify-content: flex-end; padding-right: 4rpx; }
+.ny-label text { font-size: 18rpx; color: #888; }
+
+.noise-chart-area { flex: 1; display: flex; flex-direction: column; }
+
+.n-grid {
+  position: relative;
+  display: flex; flex-direction: row; align-items: flex-end;
+  height: 300rpx;
+  border-left: 1rpx solid #eee;
+  border-bottom: 2rpx solid #ddd;
+}
+.n-grid-line { position: absolute; left: 0; right: 0; height: 1rpx; background: #f5f5f5; z-index: 0; }
+.n-grid-line:nth-child(1) { top: 0; }
+.n-grid-line:nth-child(2) { top: 25%; }
+.n-grid-line:nth-child(3) { top: 50%; }
+.n-grid-line:nth-child(4) { top: 75%; }
+
+/* 折线数据点容器 */
+.n-line-container {
+  position: relative;
+  z-index: 2;
   width: 100%;
-  height: 500rpx;
+  height: 100%;
 }
 
-/* ========== 统计摘要 ========== */
-.summary-section {
-  margin-bottom: 40rpx;
+/* 数据点圆点 */
+.n-dot {
+  position: absolute;
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  bottom: 0; /* 通过 style 设置具体 pctHeight */
+  left: 0;   /* 通过 JS 计算位置 */
 }
+.dot-night { background: #339af0; } /* 夜间蓝色 */
+.dot-day   { background: #ff922b; } /* 白天橙色 */
 
-.summary-card {
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 32rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
-}
+/* 单位标注 */
+.n-unit { text-align: right; padding-top: 6rpx; }
+.n-unit text { font-size: 20rpx; color: #aaa; }
 
-.summary-title {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #333;
-  display: block;
-  margin-bottom: 24rpx;
-  text-align: center;
-}
+/* X轴时间标签 */
+.n-x-axis { display: flex; flex-direction: row; justify-content: space-around; padding-top: 8rpx; height: 34rpx; }
+.nx-label { font-size: 17rpx; color: #bbb; flex: 1; text-align: center; }
 
-.summary-grid {
-  display: flex;
-  justify-content: space-around;
-}
-
-.summary-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8rpx;
-}
-
-.summary-value {
-  font-size: 44rpx;
-  font-weight: 800;
-}
-
+/* ====== 统计摘要 ====== */
+.summary-section { margin-bottom: 40rpx; }
+.summary-card { background: #fff; border-radius: 20rpx; padding: 32rpx; box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06); }
+.summary-title { font-size: 30rpx; font-weight: 700; color: #333; display: block; margin-bottom: 24rpx; text-align: center; }
+.summary-grid { display: flex; justify-content: space-around; }
+.summary-item { display: flex; flex-direction: column; align-items: center; gap: 8rpx; }
+.summary-value { font-size: 44rpx; font-weight: 800; }
 .summary-value.awake { color: #ff6b6b; }
 .summary-value.light { color: #51cf66; }
-.summary-value.deep { color: #339af0; }
-.summary-value.rem { color: #cc5de8; }
+.summary-value.deep  { color: #339af0; }
+summary-value.rem   { color: #cc5de8; }
+summary-label { font-size: 22rpx; color: #888; }
 
-.summary-label {
-  font-size: 22rpx;
-  color: #888;
-}
-
-/* ========== 空状态/错误 ========== */
-.empty-state, .error-state {
-  text-align: center;
-  padding-top: 200rpx;
-}
-
-.empty-text {
-  font-size: 28rpx;
-  color: #999;
-}
-
-.error-text {
-  font-size: 28rpx;
-  color: #e53935;
-  display: block;
-  margin-bottom: 20rpx;
-}
-
-.retry-btn {
-  background: #1a73e8 !important;
-  color: #fff !important;
-}
+/* 空状态/错误 */
+.empty-state, .error-state { text-align: center; padding-top: 200rpx; }
+.empty-text { font-size: 28rpx; color: #999; }
+.error-text { font-size: 28rpx; color: #e53935; display: block; margin-bottom: 20rpx; }
+.retry-btn { background: #1a73e8 !important; color: #fff !important; }

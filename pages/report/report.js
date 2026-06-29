@@ -1,133 +1,129 @@
 /**
- * @file 睡眠分期报告页逻辑（第5大节）—— ECharts 柱状图 + 日期选择器
+ * @file 睡眠分期报告页（第5+6大节）—— 分期柱状图 + 噪音折线图
  * @author 周灿
  * @date 2026-06-30
+ *
+ * 用 <view> 元素拼图表，不依赖 Canvas/ECharts，彻底避免 Timeout
  */
 
 const app = getApp();
 
-// 引入 ECharts（从组件目录）
-// eslint-disable-next-line no-undef
-const ec = require('../../components/ec-canvas/echarts');
+const STAGE_CLASSES = ['bar-awake', 'bar-light', 'bar-deep', 'bar-rem'];
 
 Page({
   data: {
     selectedDate: '',
     today: '',
     loading: false,
+    // 分期数据
     stagesData: null,
-    chartInstance: null,
+    xLabels: [],
     summary: null,
-    dataSource: '',
+    stageSource: '',
+    // 噪音数据
+    noiseData: null,
+    noiseXLabels: [],
+    noiseSource: '',
     error: ''
   },
 
   onLoad(options) {
-    // 初始化日期：默认昨天，或接收传入的日期
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const dateStr = yesterday.toISOString().split('T')[0];
-
     this.setData({
       selectedDate: options.date || dateStr,
       today: new Date().toISOString().split('T')[0]
     });
-
-    // 加载分期数据
-    this.loadStages();
-  },
-
-  onShow() {
-    // 页面显示时刷新图表（解决 TabBar 切回时尺寸问题）
-    if (this.data.chartInstance && this.data.stagesData) {
-      setTimeout(() => {
-        this.renderChart(this.data.stagesData);
-      }, 200);
-    }
+    this.loadData();
   },
 
   /**
-   * ECharts 组件初始化回调（由 ec-canvas 触发 init 事件）
+   * 同时加载分期数据 + 噪音数据
    */
-  initChart(e) {
-    const { canvas, width, height, dpr } = e.detail;
-
-    const chart = ec.init(canvas, null, {
-      width: width,
-      height: height,
-      devicePixelRatio: dpr
-    });
-
-    this.setData({ chartInstance: chart });
-
-    // 如果已有数据，立即渲染
-    if (this.data.stagesData) {
-      this.renderChart(this.data.stagesData);
-    }
-  },
-
-  /**
-   * 加载睡眠分期数据
-   */
-  loadStages() {
+  loadData() {
     const token = app.getToken();
-    if (!token) {
-      this.setData({ error: '请先登录' });
-      return;
-    }
-
+    if (!token) { this.setData({ error: '请先登录' }); return; }
     this.setData({ loading: true, error: '' });
 
+    // 并行请求两个接口
     wx.request({
       url: `${app.globalData.baseUrl}/api/sleep/report/stages?date=${this.data.selectedDate}`,
       method: 'GET',
       header: { Authorization: `Bearer ${token}` },
       timeout: 15000,
-      success: (res) => {
-        if (res.statusCode === 200 && res.data.code === 0) {
-          const stages = res.data.data.stages;
-          const source = res.data.data.source || 'db';
+      success: (res) => this.handleStagesRes(res),
+      fail: () => { /* 单个失败不影响 */ }
+    });
 
-          this.setData({
-            stagesData: stages,
-            dataSource: source === 'generated' ? '新生成' : source === 'db' ? '数据库' : '已转换',
-            error: ''
-          });
-
-          // 计算统计摘要
-          this.calcSummary(stages);
-
-          // 渲染图表（等 chartInstance 就绪后）
-          if (this.data.chartInstance) {
-            this.renderChart(stages);
-          }
-        } else if (res.statusCode === 401 || res.statusCode === 403) {
-          app.clearToken();
-          this.setData({
-            error: '登录已过期，请重新登录',
-            stagesData: null,
-            summary: null
-          });
-        } else {
-          this.setData({
-            error: res.data?.message || '获取数据失败'
-          });
-        }
-      },
-      fail: () => {
-        this.setData({ error: '网络连接失败，请检查后端服务是否启动' });
-      },
-      complete: () => {
-        this.setData({ loading: false });
-        wx.stopPullDownRefresh();
-      }
+    wx.request({
+      url: `${app.globalData.baseUrl}/api/sleep/report/noise?date=${this.data.selectedDate}`,
+      method: 'GET',
+      header: { Authorization: `Bearer ${token}` },
+      timeout: 15000,
+      success: (res) => this.handleNoiseRes(res),
+      fail: () => { /* 单个失败不影响 */ }
     });
   },
 
-  /**
-   * 计算分期统计摘要
-   * 编码: 0=清醒, 1=浅睡, 2=深睡, 3=REM
-   */
+  /** 处理分期接口响应 */
+  handleStagesRes(res) {
+    if (res.statusCode === 200 && res.data.code === 0) {
+      const stages = res.data.data.stages;
+      const heightMap = [30, 120, 230, 330];
+      const enriched = stages.map(s => ({
+        time: s.time, stage: s.stage,
+        stageClass: STAGE_CLASSES[s.stage] || 'bar-awake',
+        barHeightRpx: heightMap[s.stage] || 30
+      }));
+      const xLabels = [];
+      for (let i = 0; i < stages.length; i += 8) {
+        xLabels.push(String(stages[i].time).slice(0, 5));
+      }
+      this.setData({ stagesData: enriched, xLabels, stageSource: res.data.data.source || 'db' });
+      this.calcSummary(stages);
+    } else if (res.statusCode === 401) {
+      app.clearToken();
+      this.setData({ error: '登录已过期' });
+    }
+    this.checkLoadComplete();
+  },
+
+  /** 处理噪音接口响应 */
+  handleNoiseRes(res) {
+    if (res.statusCode === 200 && res.data.code === 0) {
+      const noises = res.data.data.noises;
+      
+      // 计算噪音折线图的 Y 轴百分比（20~70dB 映射到 0%~100%）
+      const minDb = 20, maxDb = 70;
+      const enriched = noises.map(n => ({
+        time: n.time,
+        value: n.value,
+        period: n.period,
+        // 百分比高度：value 越高，百分比越高（从底部往上长）
+        pctHeight: Math.max(0, Math.min(100, ((n.value - minDb) / (maxDb - minDb)) * 100))
+      }));
+
+      // X轴标签：每24个取一个时间（每2小时）
+      const nxLabels = [];
+      for (let i = 0; i < noises.length; i += 24) {
+        nxLabels.push(String(noises[i].time).slice(0, 5));
+      }
+
+      this.setData({ noiseData: enriched, noiseXLabels: nxLabels, noiseSource: res.data.data.source || 'db' });
+    }
+    this.checkLoadComplete();
+  },
+
+  /** 检查两个请求是否都完成 */
+  checkLoadComplete() {
+    // 只要有一个完成就关闭 loading（用户体验更好）
+    if (this.data.stagesData || this.data.noiseData) {
+      this.setData({ loading: false });
+      wx.stopPullDownRefresh();
+    }
+  },
+
   calcSummary(stages) {
     let awake = 0, light = 0, deep = 0, rem = 0;
     for (const s of stages) {
@@ -138,120 +134,22 @@ Page({
         case 3: rem++; break;
       }
     }
-
-    this.setData({
-      summary: { awake, light, deep, rem }
-    });
+    this.setData({ summary: { awake, light, deep, rem } });
   },
 
-  /**
-   * 渲染 ECharts 分期柱状图
-   * 颜色区分：
-   *   清醒(0): #ff6b6b 红色
-   *   浅睡(1): #51cf66 绿色
-   *   深睡(2): #339af0 蓝色
-   *   REM(3):  #cc5de8 紫色
-   */
-  renderChart(stages) {
-    if (!stages || !this.data.chartInstance) return;
-
-    const times = stages.map(s => s.time);
-    const values = stages.map(s => s.stage);
-    
-    // 根据阶段值映射到不同颜色
-    const colors = values.map(v => {
-      switch (v) {
-        case 0: return '#ff6b6b'; // 红色 - 清醒
-        case 1: return '#51cf66'; // 绿色 - 浅睡
-        case 2: return '#339af0'; // 蓝色 - 深睡
-        case 3: return '#cc5de8'; // 紫色 - REM
-        default: return '#999';
-      }
-    });
-
-    const option = {
-      backgroundColor: '#fff',
-      grid: {
-        top: 40,
-        right: 20,
-        bottom: 60,
-        left: 50,
-        containLabel: true
-      },
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: { type: 'shadow' },
-        formatter(params) {
-          const idx = params[0].dataIndex;
-          const val = stages[idx].stage;
-          const names = ['清醒', '浅睡', '深睡', 'REM'];
-          const colorNames = ['#ff6b6b', '#51cf66', '#339af0', '#cc5de8'];
-          return `${params[0].name}<br/>${names[val]}<br/>`;
-        }
-      },
-      xAxis: {
-        type: 'category',
-        data: times,
-        axisLabel: {
-          fontSize: 9,
-          color: '#666',
-          interval: 7, // 每8个显示一个标签
-          rotate: 45
-        },
-        axisLine: { lineStyle: { color: '#ddd' } }
-      },
-      yAxis: {
-        type: 'value',
-        name: '分期',
-        min: -0.5,
-        max: 3.5,
-        interval: 1,
-        inverse: false,
-        axisLabel: {
-          formatter(value) {
-            const labels = ['清醒', '浅睡', '深睡', 'REM'];
-            return labels[value] !== undefined ? labels[value] : '';
-          },
-          fontSize: 11,
-          color: '#666'
-        },
-        splitLine: { lineStyle: { color: '#f0f0f0', type: 'dashed' } }
-      },
-      series: [{
-        name: '睡眠分期',
-        type: 'bar',
-        barWidth: '60%',
-        data: values.map((val, idx) => ({
-          value: val,
-          itemStyle: { color: colors[idx], borderRadius: [2, 2, 0, 0] }
-        })),
-        animationDuration: 800,
-        animationEasing: 'cubicOut'
-      }]
-    };
-
-    try {
-      this.data.chartInstance.setOption(option, true); // true = 不合并，完全替换
-    } catch (err) {
-      console.error('[Report] 渲染图表失败:', err);
-    }
-  },
-
-  /**
-   * 日期选择器变更
-   */
   onDateChange(e) {
     const newDate = e.detail.value;
     if (newDate === this.data.selectedDate) return;
-
-    this.setData({ selectedDate: newDate });
-    this.loadStages(); // 切换日期后自动刷新
+    this.setData({
+      selectedDate: newDate,
+      stagesData: null,
+      noiseData: null,
+      summary: null
+    });
+    this.loadData();
   },
 
-  /**
-   * 下拉刷新
-   */
   onPullDownRefresh() {
-    this.loadStages();
+    this.loadData();
   }
 });
