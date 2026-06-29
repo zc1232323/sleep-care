@@ -33,6 +33,9 @@ async function getDb() {
     console.log('[DB] 已创建新数据库（内存中）');
   }
 
+  // 启用外键约束（ON DELETE CASCADE 依赖此设置）
+  db.run('PRAGMA foreign_keys = ON');
+
   return db;
 }
 

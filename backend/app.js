@@ -35,7 +35,7 @@ app.get('/', (req, res) => {
 // 挂载路由
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/devices', deviceRoutes);
-app.use('/api/sleep/report', reportRoutes);
+app.use('/api/sleep/report', reportRoutes);  // 包含 /daily 和 /stages
 
 // 启动服务
 initDatabase()

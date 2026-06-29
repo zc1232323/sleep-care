@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "睡眠分期报告",
+  "usingComponents": {
+    "ec-canvas": "/components/ec-canvas/ec-canvas"
+  }
+}

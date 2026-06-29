@@ -1,0 +1,68 @@
+<!--pages/report/report.wxml - 睡眠分期报告页（第5大节）-->
+<view class="report-container">
+  <!-- 日期选择器 -->
+  <view class="date-picker-bar">
+    <picker mode="date" value="{{selectedDate}}" bindchange="onDateChange" start="2026-06-01" end="{{today}}">
+      <view class="date-btn">
+        <text class="date-icon">📅</text>
+        <text class="date-text">{{selectedDate}}</text>
+        <text class="date-arrow">▼</text>
+      </view>
+    </picker>
+    <text class="refresh-tip" wx:if="{{loading}}">加载中...</text>
+    <text class="data-source" wx:if="{{dataSource}}">({{dataSource}})</text>
+  </view>
+
+  <!-- 图例说明 -->
+  <view class="legend-bar">
+    <view class="legend-item"><view class="legend-dot dot-awake"></view><text>清醒</text></view>
+    <view class="legend-item"><view class="legend-dot dot-light"></view><text>浅睡</text></view>
+    <view class="legend-item"><view class="legend-dot dot-deep"></view><text>深睡</text></view>
+    <view class="legend-item"><view class="legend-dot dot-rem"></view><text>REM</text></view>
+  </view>
+
+  <!-- ECharts 图表 -->
+  <view class="chart-wrapper">
+    <ec-canvas
+      id="sleep-stages-chart"
+      canvas-id="stages-canvas"
+      bind:init="initChart"
+    ></ec-canvas>
+  </view>
+
+  <!-- 统计摘要 -->
+  <view class="summary-section" wx:if="{{summary}}">
+    <view class="summary-card">
+      <text class="summary-title">分期统计（{{selectedDate}}）</text>
+      <view class="summary-grid">
+        <view class="summary-item">
+          <text class="summary-value awake">{{summary.awake}}</text>
+          <text class="summary-label">清醒(次)</text>
+        </view>
+        <view class="summary-item">
+          <text class="summary-value light">{{summary.light}}</text>
+          <text class="summary-label">浅睡(次)</text>
+        </view>
+        <view class="summary-item">
+          <text class="summary-value deep">{{summary.deep}}</text>
+          <text class="summary-label">深睡(次)</text>
+        </view>
+        <view class="summary-item">
+          <text class="summary-value rem">{{summary.rem}}</text>
+          <text class="summary-label">REM(次)</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && !stagesData && !error}}">
+    <text class="empty-text">暂无数据，请选择日期查看</text>
+  </view>
+
+  <!-- 错误提示 -->
+  <view class="error-state" wx:if="{{error}}">
+    <text class="error-text">{{error}}</text>
+    <button class="retry-btn" bindtap="loadStages" size="mini">重试</button>
+  </view>
+</view>
