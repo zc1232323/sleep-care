@@ -18,7 +18,22 @@ const CREATE_USERS_TABLE = `
   );
 `;
 
-/** 所有建表语句列表 */
-const ALL_SCHEMAS = [CREATE_USERS_TABLE];
+/**
+ * 设备表建表语句
+ * 字段：id, serial_no, device_name, user_id, status, created_at
+ */
+const CREATE_DEVICES_TABLE = `
+  CREATE TABLE IF NOT EXISTS devices (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    serial_no   TEXT    NOT NULL UNIQUE,
+    device_name TEXT    NOT NULL DEFAULT '',
+    user_id     INTEGER NOT NULL,
+    status      INTEGER NOT NULL DEFAULT 1,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
+  );
+`;
 
-module.exports = { CREATE_USERS_TABLE, ALL_SCHEMAS };
+/** 所有建表语句列表 */
+const ALL_SCHEMAS = [CREATE_USERS_TABLE, CREATE_DEVICES_TABLE];
+
+module.exports = { CREATE_USERS_TABLE, CREATE_DEVICES_TABLE, ALL_SCHEMAS };

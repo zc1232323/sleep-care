@@ -10,6 +10,7 @@ const express = require('express');
 const cors = require('cors');
 const { initDatabase } = require('./db/init');
 const authRoutes = require('./routes/auth');
+const deviceRoutes = require('./routes/devices');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,6 +33,7 @@ app.get('/', (req, res) => {
 
 // 挂载路由
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/devices', deviceRoutes);
 
 // 启动服务
 initDatabase()
