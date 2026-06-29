@@ -1,4 +1,5 @@
 <!--pages/report/report.wxml - 睡眠分期报告页（第5大节）-->
+<!-- 柱状图用 view 元素实现，避免 Canvas 2D Timeout 兼容性问题 -->
 <view class="report-container">
   <!-- 日期选择器 -->
   <view class="date-picker-bar">
@@ -21,13 +22,48 @@
     <view class="legend-item"><view class="legend-dot dot-rem"></view><text>REM</text></view>
   </view>
 
-  <!-- ECharts 图表 -->
-  <view class="chart-wrapper">
-    <ec-canvas
-      id="sleep-stages-chart"
-      canvas-id="stages-canvas"
-      bind:init="initChart"
-    ></ec-canvas>
+  <!-- ========== View 柱状图（纯 DOM 实现）========== -->
+  <view class="chart-wrapper" wx:if="{{stagesData}}">
+    <!-- 图表标题 -->
+    <view class="chart-title">睡眠分期曲线</view>
+
+    <view class="chart-body">
+      <!-- Y轴标签 -->
+      <view class="y-axis">
+        <view class="y-label"><text>REM</text></view>
+        <view class="y-label"><text>深睡</text></view>
+        <view class="y-label"><text>浅睡</text></view>
+        <view class="y-label"><text>清醒</text></view>
+      </view>
+
+      <!-- 图表区域（网格 + 柱子） -->
+      <view class="chart-area">
+        <!-- 4条网格线 + 48根柱子 -->
+        <view class="chart-grid">
+          <!-- 网格线 -->
+          <view class="grid-line"></view>
+          <view class="grid-line"></view>
+          <view class="grid-line"></view>
+          <view class="grid-line"></view>
+
+          <!-- 柱子容器：flex 横排 -->
+          <view class="bars-container">
+            <block wx:for="{{stagesData}}" wx:key="time">
+              <view class="bar-col">
+                <view class="bar {{item.stageClass}}" style="height: {{item.barHeight}}%;"></view>
+              </view>
+            </block>
+          </view>
+        </view>
+
+        <!-- X轴时间标签 -->
+        <view class="x-axis">
+          <block wx:for="{{xLabels}}" wx:key="*this">
+            <text class="x-label">{{item}}</text>
+          </block>
+        </view>
+      </view>
+    </view>
   </view>
 
   <!-- 统计摘要 -->
