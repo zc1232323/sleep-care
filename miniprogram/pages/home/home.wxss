@@ -1,0 +1,166 @@
+/* pages/home/home.wxss */
+.home-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #1a73e8 0%, #4a90d9 25%, #f5f5f5 28%);
+  padding: 0 30rpx;
+}
+
+/* 日期栏 */
+.date-bar {
+  padding: 20rpx 0 10rpx;
+}
+
+.date-text {
+  color: rgba(255,255,255,0.9);
+  font-size: 28rpx;
+}
+
+/* 睡眠卡片 */
+.sleep-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 36rpx 32rpx;
+  box-shadow: 0 8rpx 30rpx rgba(0,0,0,0.08);
+  margin-top: 16rpx;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.card-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.card-date {
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* 评分区域 */
+.score-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 0 36rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  margin-bottom: 30rpx;
+}
+
+.score-number {
+  font-size: 120rpx;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.score-number.excellent {
+  color: #4caf50;
+}
+.score-number.good {
+  color: #8bc34a;
+}
+.score-number.fair {
+  color: #ff9800;
+}
+.score-number.poor {
+  color: #f44336;
+}
+
+.score-label {
+  font-size: 26rpx;
+  color: #888;
+  margin-top: 8rpx;
+}
+
+/* 指标网格 */
+.metrics-grid {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 30rpx;
+  padding: 16rpx 0;
+  background: #fafafa;
+  border-radius: 16rpx;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.metric-value {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1a73e8;
+}
+
+.metric-label {
+  font-size: 22rpx;
+  color: #999;
+}
+
+/* 详细数据 */
+.detail-section {
+  border-top: 1rpx solid #f0f0f0;
+  padding-top: 24rpx;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14rpx 0;
+}
+
+.detail-label {
+  font-size: 27rpx;
+  color: #666;
+}
+
+.detail-value {
+  font-size: 27rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 加载状态 */
+.loading-state, .refresh-tip, .empty-state {
+  text-align: center;
+  padding-top: 200rpx;
+}
+
+.loading-state text, .refresh-tip text {
+  color: #999;
+  font-size: 28rpx;
+}
+
+.refresh-tip text {
+  color: #1a73e8;
+}
+
+.empty-icon {
+  width: 160rpx;
+  height: 160rpx;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30rpx;
+}
+
+.empty-emoji {
+  font-size: 80rpx;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: #999;
+  display: block;
+}

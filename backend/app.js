@@ -11,6 +11,7 @@ const cors = require('cors');
 const { initDatabase } = require('./db/init');
 const authRoutes = require('./routes/auth');
 const deviceRoutes = require('./routes/devices');
+const reportRoutes = require('./routes/reports');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -34,12 +35,14 @@ app.get('/', (req, res) => {
 // 挂载路由
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/devices', deviceRoutes);
+app.use('/api/sleep/report', reportRoutes);
 
 // 启动服务
 initDatabase()
   .then(() => {
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`[Server] SleepCare 后端服务已启动: http://localhost:${PORT}`);
+      console.log(`[Server] 局域网访问: http://172.30.157.136:${PORT}`);
     });
   })
   .catch((err) => {

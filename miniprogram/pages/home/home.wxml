@@ -1,0 +1,71 @@
+<!--pages/home/home.wxml-->
+<view class="home-container">
+  <!-- 顶部日期栏 -->
+  <view class="date-bar">
+    <text class="date-text">{{reportDate}}</text>
+  </view>
+
+  <!-- 睡眠评分卡片 -->
+  <view class="sleep-card" wx:if="{{reportData}}">
+    <view class="card-header">
+      <text class="card-title">睡眠质量</text>
+      <text class="card-date">{{reportData.report_date}}</text>
+    </view>
+
+    <!-- 大数字评分 -->
+    <view class="score-section">
+      <text class="score-number {{scoreLevel}}">{{reportData.sleep_score}}</text>
+      <text class="score-label">睡眠评分</text>
+    </view>
+
+    <!-- 指标网格 -->
+    <view class="metrics-grid">
+      <view class="metric-item">
+        <text class="metric-value">{{reportData.total_duration}}</text>
+        <text class="metric-label">总时长</text>
+      </view>
+      <view class="metric-item">
+        <text class="metric-value">{{reportData.deep_ratio}}</text>
+        <text class="metric-label">深睡比例</text>
+      </view>
+      <view class="metric-item">
+        <text class="metric-value">{{reportData.awake_count}}次</text>
+        <text class="metric-label">觉醒次数</text>
+      </view>
+    </view>
+
+    <!-- 详细数据 -->
+    <view class="detail-section">
+      <view class="detail-row">
+        <text class="detail-label">深睡时长</text>
+        <text class="detail-value">{{formatMin(reportData.deep_sleep_minutes)}}</text>
+      </view>
+      <view class="detail-row">
+        <text class="detail-label">浅睡时长</text>
+        <text class="detail-value">{{formatMin(reportData.light_sleep_minutes)}}</text>
+      </view>
+      <view class="detail-row">
+        <text class="detail-label">清醒时长</text>
+        <text class="detail-value">{{formatMin(reportData.awake_minutes)}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-state" wx:if="{{loading && !refreshing}}">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 下拉刷新提示 -->
+  <view class="refresh-tip" wx:if="{{refreshing}}">
+    <text>正在刷新...</text>
+  </view>
+
+  <!-- 空状态（未登录） -->
+  <view class="empty-state" wx:if="{{!loading && !reportData && !hasToken}}">
+    <view class="empty-icon">
+      <text class="empty-emoji">😴</text>
+    </view>
+    <text class="empty-text">请先登录查看睡眠报告</text>
+  </view>
+</view>

@@ -64,15 +64,9 @@ Page({
           app.globalData.token = token;
           app.globalData.userInfo = user;
 
-          // 跳转到设备列表页
-          wx.switchTab({
-            url: '/pages/devices/devices',
-            fail: () => {
-              // 如果不是 tabBar 页面，用 redirectTo
-              wx.redirectTo({
-                url: '/pages/devices/devices'
-              });
-            }
+          // 跳转到首页（睡眠报告）
+          wx.redirectTo({
+            url: '/pages/home/home'
           });
         } else {
           this.setData({

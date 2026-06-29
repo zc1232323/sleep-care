@@ -6,7 +6,7 @@
 
 App({
   globalData: {
-    baseUrl: 'http://localhost:3000',
+    baseUrl: 'http://172.30.157.136:3000',
     token: wx.getStorageSync('token') || '',
     userInfo: null
   },

@@ -33,7 +33,33 @@ const CREATE_DEVICES_TABLE = `
   );
 `;
 
-/** 所有建表语句列表 */
-const ALL_SCHEMAS = [CREATE_USERS_TABLE, CREATE_DEVICES_TABLE];
+/**
+ * 睡眠报告表建表语句
+ * 字段：id, user_id, device_id, report_date, sleep_score, total_sleep_minutes,
+ *       deep_sleep_minutes, light_sleep_minutes, awake_minutes, awake_count,
+ *       heart_rate_json, sleep_stages_json, noise_json
+ */
+const CREATE_SLEEP_REPORTS_TABLE = `
+  CREATE TABLE IF NOT EXISTS sleep_reports (
+    id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id              INTEGER NOT NULL,
+    device_id            INTEGER,
+    report_date          TEXT    NOT NULL,
+    sleep_score          INTEGER NOT NULL DEFAULT 0,
+    total_sleep_minutes  INTEGER NOT NULL DEFAULT 0,
+    deep_sleep_minutes   INTEGER NOT NULL DEFAULT 0,
+    light_sleep_minutes  INTEGER NOT NULL DEFAULT 0,
+    awake_minutes        INTEGER NOT NULL DEFAULT 0,
+    awake_count          INTEGER NOT NULL DEFAULT 0,
+    heart_rate_json      TEXT,
+    sleep_stages_json    TEXT,
+    noise_json           TEXT,
+    created_at           TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
+    UNIQUE(user_id, report_date)
+  );
+`;
 
-module.exports = { CREATE_USERS_TABLE, CREATE_DEVICES_TABLE, ALL_SCHEMAS };
+/** 所有建表语句列表 */
+const ALL_SCHEMAS = [CREATE_USERS_TABLE, CREATE_DEVICES_TABLE, CREATE_SLEEP_REPORTS_TABLE];
+
+module.exports = { CREATE_USERS_TABLE, CREATE_DEVICES_TABLE, CREATE_SLEEP_REPORTS_TABLE, ALL_SCHEMAS };
