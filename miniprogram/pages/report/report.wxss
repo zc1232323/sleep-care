@@ -1,204 +1,240 @@
-/* pages/report/report.wxss - 睡眠分期报告页样式（View柱状图版） */
+/* pages/report/report.wxss - 第5+6大节（分期柱状图 + 噪音折线图） */
 
-.report-container {
-  min-height: 100vh;
-  background: #f5f7fa;
-  padding: 0 20rpx;
-}
+.report-container { min-height: 100vh; background: #f5f7fa; padding: 0 20rpx; }
 
-/* ========== 日期选择器 ========== */
-.date-picker-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24rpx 0;
-  gap: 16rpx;
-}
-.date-btn {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  background: #fff;
-  border: 2rpx solid #e0e0e0;
-  border-radius: 40rpx;
-  padding: 16rpx 32rpx;
-}
+/* ====== 日期选择器 ====== */
+.date-picker-bar { display: flex; align-items: center; justify-content: center; padding: 24rpx 0; gap: 16rpx; flex-wrap: wrap; }
+.date-btn { display: flex; align-items: center; gap: 12rpx; background: #fff; border: 2rpx solid #e0e0e0; border-radius: 40rpx; padding: 16rpx 32rpx; }
 .date-icon { font-size: 28rpx; }
 .date-text { font-size: 30rpx; color: #1a73e8; font-weight: 600; }
 .date-arrow { font-size: 20rpx; color: #999; }
 .refresh-tip { font-size: 24rpx; color: #1a73e8; animation: pulse 1.2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-.data-source {
-  font-size: 22rpx; color: #999;
-  background: #f0f0f0; padding: 4rpx 16rpx; border-radius: 20rpx;
-}
+.source-tags { display: flex; gap: 8rpx; }
+.src-tag { font-size: 20rpx; color: #666; background: #f0f0f0; padding: 4rpx 14rpx; border-radius: 16rpx; }
 
-/* ========== 图例 ========== */
-.legend-bar {
-  display: flex; justify-content: center;
-  gap: 30rpx; padding: 16rpx 0 20rpx; flex-wrap: wrap;
-}
+/* ====== 图例 ====== */
+.legend-bar { display: flex; justify-content: center; gap: 30rpx; padding: 16rpx 0 20rpx; flex-wrap: wrap; }
 .legend-item { display: flex; align-items: center; gap: 8rpx; }
 .legend-dot { width: 20rpx; height: 20rpx; border-radius: 50%; }
 .dot-awake { background: #ff6b6b; }
 .dot-light { background: #51cf66; }
 .dot-deep  { background: #339af0; }
 .dot-rem   { background: #cc5de8; }
-.legend-item text { font-size: 24rpx; color: #666; }
+legend-item text { font-size: 24rpx; color: #666; }
 
-/* ========== View 柱状图（核心）========== */
+/* ====== 通用图表容器 ====== */
 .chart-wrapper {
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 24rpx 16rpx;
+  background: #fff; border-radius: 20rpx;
+  padding: 20rpx 12rpx 16rpx;
   box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
   margin-bottom: 24rpx;
 }
+.chart-title { text-align: center; font-size: 28rpx; font-weight: 700; color: #333; margin-bottom: 10rpx; }
 
-.chart-title {
-  text-align: center;
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 16rpx;
-}
-
-.chart-body {
-  display: flex;
-  flex-direction: row;
-}
-
-/* Y轴 */
-.y-axis {
-  width: 56rpx;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 6rpx 0;
-  flex-shrink: 0;
-}
-.y-label {
-  height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 8rpx;
-}
-.y-label text {
-  font-size: 20rpx;
-  color: #888;
-  writing-mode: horizontal-tb;
-}
-
-/* 图表区域 */
-.chart-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 网格 + 柱子容器 */
-.chart-grid {
-  flex: 1;
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  min-height: 280rpx;
-  border-left: 1rpx solid #eee;
-  border-bottom: 1rpx solid #ddd;
-}
-/* 4条水平网格线 */
-.grid-line {
-  position: absolute;
-  left: 0; right: 0;
-  height: 1rpx;
-  background: #f0f0f0;
-}
+/* ====== 分期柱状图（第5节）====== */
+.chart-body { display: flex; flex-direction: row; }
+.y-axis { width: 52rpx; display: flex; flex-direction: column; justify-content: space-between; flex-shrink: 0; }
+.y-label { height: 85rpx; display: flex; align-items: center; justify-content: flex-end; padding-right: 4rpx; }
+.y-label text { font-size: 18rpx; color: #888; }
+.chart-area { flex: 1; display: flex; flex-direction: column; }
+.chart-grid { position: relative; display: flex; flex-direction: row; align-items: flex-end; height: 340rpx; border-left: 1rpx solid #eee; border-bottom: 2rpx solid #ccc; }
+.grid-line { position: absolute; left: 0; right: 0; height: 1rpx; background: #eee; z-index: 0; }
 .grid-line:nth-child(1) { top: 0; }
-.grid-line:nth-child(2) { top: 25%; }
-.grid-line:nth-child(3) { top: 50%; }
-.grid-line:nth-child(4) { top: 75%; }
-
-/* 柱子容器：flex 横排，底部对齐 */
-.bars-container {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-end;
-  width: 100%;
-  height: 100%;
-  padding: 0 4rpx;
-  box-sizing: border-box;
-}
-
-/* 每根柱子的列 */
-.bar-col {
-  flex: 1;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 0 1rpx;
-}
-
-/* 柱子本体：圆角 + 颜色 */
-.bar {
-  width: 90%;
-  border-radius: 3rpx 3rpx 0 0;
-  min-height: 6rpx;
-  transition: all 0.3s ease;
-}
+.grid-line:nth-child(2) { top: 85rpx; }
+.grid-line:nth-child(3) { top: 170rpx; }
+.grid-line:nth-child(4) { top: 255rpx; }
+.bars-container { display: flex; flex-direction: row; align-items: flex-end; width: 100%; height: 100%; position: relative; z-index: 1; padding: 0 2rpx; box-sizing: border-box; }
+.bar-col { flex: 1; display: flex; align-items: flex-end; justify-content: center; height: 100%; }
+.bar { width: 80%; border-radius: 3rpx 3rpx 0 0; min-height: 12rpx; }
 .bar-awake { background: #ff6b6b; }
 .bar-light { background: #51cf66; }
 .bar-deep  { background: #339af0; }
 .bar-rem   { background: #cc5de8; }
+.x-axis { display: flex; flex-direction: row; justify-content: space-around; padding-top: 10rpx; height: 36rpx; }
+.x-label { font-size: 18rpx; color: #aaa; flex: 1; text-align: center; }
+
+/* ====== 噪音柱状图（第6节，柱状图版）====== */
+.noise-title { color: #e67700 !important; }
+
+/* 噪音图例 */
+.noise-legend-bar { display: flex; justify-content: center; gap: 30rpx; padding: 8rpx 0 12rpx; flex-wrap: wrap; }
+.dot-night { background: #339af0; } /* 夜间蓝色 */
+.dot-day   { background: #ff922b; } /* 白天橙色 */
+
+.noise-chart-body { display: flex; flex-direction: row; }
+
+/* Y轴 (dB) */
+.noise-y-axis { width: 52rpx; display: flex; flex-direction: column; justify-content: space-between; flex-shrink: 0; padding: 4rpx 0; }
+.ny-label { height: 65rpx; display: flex; align-items: center; justify-content: flex-end; padding-right: 4rpx; }
+.ny-label text { font-size: 18rpx; color: #888; }
+
+.noise-chart-area { flex: 1; display: flex; flex-direction: column; }
+
+/* 图表网格区域 - 固定260rpx高 */
+.n-grid {
+  position: relative;
+  display: flex; flex-direction: row; align-items: flex-end;
+  height: 260rpx;
+  border-left: 1rpx solid #eee;
+  border-bottom: 2rpx solid #ddd;
+}
+.n-grid-line { position: absolute; left: 0; right: 0; height: 1rpx; background: #f5f5f5; z-index: 0; }
+.n-grid-line:nth-child(1) { top: 0; }
+.n-grid-line:nth-child(2) { top: 25%; }
+.n-grid-line:nth-child(3) { top: 50%; }
+.n-grid-line:nth-child(4) { top: 75%; }
+
+/* 144根柱子容器 */
+.n-bars-container {
+  display: flex; flex-direction: row; align-items: flex-end;
+  width: 100%; height: 100%;
+  position: relative; z-index: 1;
+  padding: 0 2rpx; box-sizing: border-box;
+}
+.n-bar-col { flex: 1; display: flex; align-items: flex-end; justify-content: center; height: 100%; min-width: 0; }
+
+/* 柱子：细条形，圆角顶部 */
+.n-bar { width: 80%; border-radius: 2rpx 2rpx 0 0; min-height: 3rpx; }
+.bar-noise-night { background: #339af0; } /* 夜间安静 → 蓝色 */
+.bar-noise-day   { background: #ff922b; } /* 白天正常 → 橙色 */
 
 /* X轴时间标签 */
-.x-axis {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  padding-top: 8rpx;
-  height: 40rpx;
-}
-.x-label {
-  font-size: 18rpx;
-  color: #999;
-  flex: 1;
-  text-align: center;
-}
+.n-x-axis { display: flex; flex-direction: row; justify-content: space-around; padding-top: 8rpx; height: 34rpx; }
+.nx-label { font-size: 17rpx; color: #bbb; flex: 1; text-align: center; }
 
-/* ========== 统计摘要 ========== */
+/* 单位标注 */
+.n-unit { text-align: right; padding-top: 6rpx; }
+.n-unit text { font-size: 20rpx; color: #aaa; }
+
+/* ====== 统计摘要 ====== */
 .summary-section { margin-bottom: 40rpx; }
-.summary-card {
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 32rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
-}
-.summary-title {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #333;
-  display: block;
-  margin-bottom: 24rpx;
-  text-align: center;
-}
+.summary-card { background: #fff; border-radius: 20rpx; padding: 32rpx; box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06); }
+.summary-title { font-size: 30rpx; font-weight: 700; color: #333; display: block; margin-bottom: 24rpx; text-align: center; }
 .summary-grid { display: flex; justify-content: space-around; }
-.summary-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8rpx;
-}
+.summary-item { display: flex; flex-direction: column; align-items: center; gap: 8rpx; }
 .summary-value { font-size: 44rpx; font-weight: 800; }
 .summary-value.awake { color: #ff6b6b; }
 .summary-value.light { color: #51cf66; }
 .summary-value.deep  { color: #339af0; }
-.summary-value.rem   { color: #cc5de8; }
-.summary-label { font-size: 22rpx; color: #888; }
+summary-value.rem   { color: #cc5de8; }
+summary-label { font-size: 22rpx; color: #888; }
 
-/* ========== 空状态/错误 ========== */
+/* 空状态/错误 */
 .empty-state, .error-state { text-align: center; padding-top: 200rpx; }
 .empty-text { font-size: 28rpx; color: #999; }
 .error-text { font-size: 28rpx; color: #e53935; display: block; margin-bottom: 20rpx; }
 .retry-btn { background: #1a73e8 !important; color: #fff !important; }
+
+/* ====== 第7大节：评分趋势图 ====== */
+.summary-title { color: #845ef7 !important; } /* 紫色标题 */
+
+/* 日/周/月切换按钮 */
+.period-switcher {
+  display: flex; justify-content: center;
+  gap: 12rpx; padding: 16rpx 0 12rpx;
+}
+.period-btn {
+  flex: 1;
+  height: 64rpx;
+  line-height: 64rpx;
+  text-align: center;
+  border-radius: 32rpx;
+  background: #f0f4ff;
+  color: #666;
+  font-size: 26rpx;
+  font-weight: 600;
+  border: none;
+  transition: all 0.2s;
+}
+.period-btn.active {
+  background: #1a73e8;
+  color: #fff;
+}
+.period-btn::after {
+  border: none;
+}
+
+/* 平均分展示 */
+.avg-score-display {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8rpx; padding: 10rpx 0;
+}
+.avg-label { font-size: 24rpx; color: #888; }
+.avg-value { font-size: 48rpx; font-weight: 800; color: #845ef7; }
+
+/* 趋势图布局 */
+.trend-chart-body { display: flex; flex-direction: row; }
+
+/* Y轴 (分数) */
+.trend-y-axis { width: 52rpx; display: flex; flex-direction: column; justify-content: space-between; flex-shrink: 0; padding: 2rpx 0; }
+.ty-label { height: 52rpx; display: flex; align-items: center; justify-content: flex-end; padding-right: 4rpx; }
+.ty-label text { font-size: 18rpx; color: #888; }
+
+.trend-chart-area { flex: 1; display: flex; flex-direction: column; }
+
+/* 图表网格 */
+.t-grid {
+  position: relative; display: flex; flex-direction: row; align-items: flex-end;
+  height: 280rpx;
+  border-left: 1rpx solid #eee; border-bottom: 2rpx solid #ddd;
+}
+.t-grid-line { position: absolute; left: 0; right: 0; height: 1rpx; background: #f5f5f5; z-index: 0; }
+.t-grid-line:nth-child(1) { top: 0; }     /* 100 */
+.t-grid-line:nth-child(2) { top: 20%; }   /* 88 */
+.t-grid-line:nth-child(3) { top: 40%; }   /* 76 */
+.t-grid-line:nth-child(4) { top: 60%; }   /* 64 */
+.t-grid-line:nth-child(5) { top: 80%; }   /* 52 */
+/* 基线40分 = border-bottom 处理 */
+
+/* markLine 平均参考线 */
+.mark-line {
+  position: absolute; left: 0; right: 0;
+  height: 1rpx; z-index: 1;
+  display: flex; align-items: center; justify-content: flex-end;
+  padding-right: 8rpx;
+}
+.mark-line::before {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0;
+  height: 1rpx; background: repeating-linear-gradient(90deg, #845ef7 0, transparent 6rpx, transparent 10rpx);
+}
+.mark-text { font-size: 18rpx; color: #845ef7; font-weight: 700; white-space: nowrap; z-index: 2;
+  background: rgba(255,255,255,0.9); padding: 2rpx 8rpx; border-radius: 8rpx; }
+
+/* 数据点容器 */
+.t-dots-container {
+  display: flex; flex-direction: row; align-items: flex-end;
+  width: 100%; height: 100%;
+  position: relative; z-index: 2; padding: 0 2rpx; box-sizing: border-box;
+}
+.t-dot-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+
+/* 数据点圆圈 */
+.t-dot {
+  width: 14rpx; height: 14rpx; border-radius: 50%;
+  border-width: 3rpx; border-style: solid;
+  box-sizing: border-box;
+  position: absolute; bottom: 0;
+  transform: translateX(-50%);
+}
+.dot-excellent { border-color: #51cf66; background: #d3f9d8; } /* 绿色 ≥85 */
+.dot-good      { border-color: #82c91e; background: #f6ffed; } /* 浅绿 ≥70 */
+.dot-fair       { border-color: #ffc107; background: #fffbe6; } /* 黄色 ≥60 */
+.dot-poor       { border-color: #ff6b6b; background: #ffe3e3; } /* 红色 <60 */
+
+/* 柱子（从基线到数据点，半透明）*/
+.t-bar {
+  width: 70%; border-radius: 2rpx 2rpx 0 0;
+  min-height: 4rpx; opacity: 0.35;
+  position: absolute; bottom: 0;
+  transform: translateX(-50%);
+}
+.bar-excellent { background: #51cf66; }
+.bar-good      { background: #82c91e; }
+.bar-fair       { background: #ffc107; }
+.bar-poor       { background: #ff6b6b; }
+
+/* X轴标签 */
+.t-x-axis { display: flex; flex-direction: row; justify-content: space-around; padding-top: 8rpx; height: 34rpx; }
+.tx-label { font-size: 17rpx; color: #bbb; flex: 1; text-align: center; }

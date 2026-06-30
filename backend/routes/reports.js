@@ -657,4 +657,235 @@ function generate144NoisePoints(userId, deviceId, dateStr) {
   return noises;
 }
 
+// ============================================================
+// 第7大节：睡眠评分汇总 API（GET /api/sleep/summary）
+// ============================================================
+
+/**
+ * @api {get} /api/sleep/summary 获取睡眠评分汇总
+ * @apiHeader {String} Authorization Bearer JWT Token
+ * @apiParam {String} [period] 时间粒度: day(日,近7天) / week(周,近6周) / month(月,近6月), 默认 day
+ *
+ * 返回格式:
+ *   - period: 当前时间粒度
+ *   - labels: 时间标签数组 (日期/周数/月份)
+ *   - scores: 每个时间点的睡眠评分数组
+ *   - avg_score: 平均分
+ */
+router.get('/summary', async (req, res) => {
+  const userId = req.user.id;
+  const period = req.query.period || 'day';
+
+  // 校验 period 参数
+  if (!['day', 'week', 'month'].includes(period)) {
+    return res.json({ code: 1001, message: 'period 参数必须是 day/week/month 之一', data: null });
+  }
+
+  try {
+    const db = await getDb();
+
+    // 获取设备 ID
+    let deviceId = 0;
+    const deviceRow = db.exec(
+      'SELECT id FROM devices WHERE user_id = ? ORDER BY created_at ASC LIMIT 1',
+      [userId]
+    );
+    if (deviceRow.length > 0 && deviceRow[0].values.length > 0) {
+      deviceId = deviceRow[0].values[0][0];
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const labels = [];
+    const dateRange = [];
+
+    if (period === 'day') {
+      // 日视图：最近 7 天
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const ds = d.toISOString().split('T')[0];
+        labels.push(ds.slice(5).replace('-', '/')); // "06/24" 格式
+        dateRange.push(ds);
+      }
+    } else if (period === 'week') {
+      // 周视图：最近 6 周（每周取该周的评分均值或最近一天）
+      for (let i = 5; i >= 0; i--) {
+        const weekEnd = new Date(today);
+        weekEnd.setDate(weekEnd.getDate() - (i * 7));
+        const weekStart = new Date(weekEnd);
+        weekStart.setDate(weekStart.getDate() - 6);
+
+        // 标签：第N周 (MM/DD-MM/DD)
+        const sw = String(weekStart.getMonth() + 1).padStart(2,'0') + '/' + String(weekStart.getDate()).padStart(2,'0');
+        const ew = String(weekEnd.getMonth() + 1).padStart(2,'0') + '/' + String(weekEnd.getDate()).padStart(2,'0');
+        labels.push(`第${6-i}周 (${sw}-${ew})`);
+        dateRange.push({ start: weekStart.toISOString().split('T')[0], end: weekEnd.toISOString().split('T')[0] });
+      }
+    } else {
+      // 月视图：最近 6 个月
+      for (let i = 5; i >= 0; i--) {
+        const m = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        labels.push(`${m.getFullYear()}/${String(m.getMonth()+1).padStart(2,'0')}`);
+        dateRange.push({
+          start: `${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}-01`,
+          end: null  // 月末由SQL处理
+        });
+      }
+    }
+
+    // 查询已有数据的评分
+    let scores = [];
+    let totalScore = 0;
+    let scoreCount = 0;
+
+    if (period === 'day') {
+      // 日视图：逐日查询
+      for (const ds of dateRange) {
+        const row = db.exec(
+          `SELECT sleep_score FROM sleep_reports WHERE user_id = ? AND device_id = ? AND report_date = ?`,
+          [userId, deviceId, ds]
+        );
+
+        if (row.length > 0 && row[0].values.length > 0) {
+          const sc = row[0].values[0][0];
+          scores.push(sc || 70); // 默认70
+          totalScore += (sc || 70);
+          scoreCount++;
+        } else {
+          // 缺失 → 自动生成模拟评分并插入
+          const genScore = await generateRandomScore(ds, userId, deviceId, db);
+          scores.push(genScore);
+          totalScore += genScore;
+          scoreCount++;
+        }
+      }
+    } else if (period === 'week') {
+      // 周视图：查询每周的评分，取均值或最近一天
+      for (const range of dateRange) {
+        const row = db.exec(
+          `SELECT AVG(sleep_score) as avg_sc FROM sleep_reports 
+           WHERE user_id = ? AND device_id = ? 
+             AND report_date >= ? AND report_date <= ?`,
+          [userId, deviceId, range.start, range.end]
+        );
+
+        if (row.length > 0 && row[0].values.length > 0 && row[0].values[0][0] !== null) {
+          const sc = Math.round(row[0].values[0][0]);
+          scores.push(sc || 70);
+          totalScore += (sc || 70);
+          scoreCount++;
+        } else {
+          // 该周无数据 → 用中间日期生成
+          const midDate = range.start;
+          const genScore = await generateRandomScore(midDate, userId, deviceId, db);
+          scores.push(genScore);
+          totalScore += genScore;
+          scoreCount++;
+        }
+      }
+    } else {
+      // 月视图：查询每月的评分
+      for (const range of dateRange) {
+        const monthPrefix = range.start.slice(0, 7); // "2026-06"
+        const row = db.exec(
+          `SELECT AVG(sleep_score) as avg_sc FROM sleep_reports 
+           WHERE user_id = ? AND device_id = ? 
+             AND report_date LIKE ?`,
+          [userId, deviceId, monthPrefix + '%']
+        );
+
+        if (row.length > 0 && row[0].values.length > 0 && row[0].values[0][0] !== null) {
+          const sc = Math.round(row[0].values[0][0]);
+          scores.push(sc || 70);
+          totalScore += (sc || 70);
+          scoreCount++;
+        } else {
+          // 该月无数据 → 用月初日期生成
+          const genScore = await generateRandomScore(range.start, userId, deviceId, db);
+          scores.push(genScore);
+          totalScore += genScore;
+          scoreCount++;
+        }
+      }
+    }
+
+    const avgScore = scoreCount > 0 ? Math.round(totalScore / scoreCount * 10) / 10 : 70;
+
+    return res.json({
+      code: 0,
+      message: 'success',
+      data: {
+        period,
+        labels,
+        scores,
+        avg_score: avgScore,
+        count: scores.length
+      }
+    });
+
+  } catch (err) {
+    console.error('[Summary] 获取评分汇总失败:', err);
+    res.json({ code: 1001, message: '获取评分汇总失败', data: null });
+  }
+});
+
+/**
+ * 为缺失日期生成随机睡眠评分（确定性伪随机，同用户同日期一致）
+ * 同时自动 INSERT 到数据库并 saveDb()
+ */
+async function generateRandomScore(dateStr, userId, deviceId, db) {
+  const seed = `${userId}_${deviceId}_${dateStr}_score`;
+  const rand = createSeededRandom(seed);
+  
+  // 生成 60~95 之间的评分（大部分在 65~88 区间，符合正态分布感）
+  const base = rand();
+  let score;
+  if (base < 0.05) score = 60 + rand() * 5;       // 极差 (5%)
+  else if (base < 0.20) score = 65 + rand() * 8;   // 较差 (15%)
+  else if (base < 0.60) score = 73 + rand() * 12;   // 中等 (40%)
+  else if (base < 0.90) score = 85 + rand() * 8;   // 良好 (30%)
+  else score = 93 + rand() * 4;                   // 优秀 (10%)
+
+  score = Math.round(score);
+
+  // 插入数据库（懒加载+补充机制）
+  try {
+    // 直接使用传入的 db 参数（已由调用方 getDb() 初始化）
+    
+    // 先检查是否已存在
+    const existing = db.exec(
+      'SELECT id FROM sleep_reports WHERE user_id = ? AND device_id = ? AND report_date = ?',
+      [userId, deviceId, dateStr]
+    );
+
+    const baseData = generateReportData(userId, deviceId, dateStr);
+
+    if (existing.length > 0 && existing[0].values.length > 0) {
+      // 已有记录但可能缺 sleep_score → UPDATE
+      db.run(
+        'UPDATE sleep_reports SET sleep_score = ?, total_sleep_minutes = ?, deep_sleep_minutes = ?, light_sleep_minutes = ?, rem_sleep_minutes = ?, awake_minutes = ?, awake_count = ?, heart_rate_json = ?, noise_json = ? WHERE id = ?',
+        [score, baseData.total_sleep_minutes, baseData.deep_sleep_minutes, baseData.light_sleep_minutes,
+         baseData.rem_sleep_minutes, baseData.awake_minutes, baseData.awake_count,
+         baseData.heart_rate_json, baseData.noise_json, existing[0].values[0][0]]
+      );
+    } else {
+      // 无记录 → INSERT
+      db.run(
+        `INSERT INTO sleep_reports (user_id, device_id, report_date, sleep_score, total_sleep_minutes,
+         deep_sleep_minutes, light_sleep_minutes, rem_sleep_minutes, awake_minutes, awake_count, heart_rate_json, noise_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [userId, deviceId, dateStr, score, baseData.total_sleep_minutes,
+         baseData.deep_sleep_minutes, baseData.light_sleep_minutes, baseData.rem_sleep_minutes,
+         baseData.awake_minutes, baseData.awake_count, baseData.heart_rate_json, baseData.noise_json]
+      );
+    }
+    saveDb();
+  } catch (e) {
+    console.warn('[Summary] 自动补充数据失败:', e.message);
+  }
+
+  return score;
+}
+
 module.exports = router;

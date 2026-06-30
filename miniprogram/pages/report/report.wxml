@@ -1,5 +1,5 @@
-<!--pages/report/report.wxml - 睡眠分期报告页（第5大节）-->
-<!-- 柱状图用 view 元素实现，避免 Canvas 2D Timeout 兼容性问题 -->
+<!--pages/report/report.wxml - 睡眠报告页（第5+6大节）-->
+<!-- 分期柱状图 + 噪音折线图（纯View实现，不依赖Canvas）-->
 <view class="report-container">
   <!-- 日期选择器 -->
   <view class="date-picker-bar">
@@ -11,10 +11,13 @@
       </view>
     </picker>
     <text class="refresh-tip" wx:if="{{loading}}">加载中...</text>
-    <text class="data-source" wx:if="{{dataSource}}">({{dataSource}})</text>
+    <view class="source-tags" wx:if="{{stageSource || noiseSource}}">
+      <text class="src-tag" wx:if="{{stageSource}}">分期:{{stageSource}}</text>
+      <text class="src-tag" wx:if="{{noiseSource}}">噪音:{{noiseSource}}</text>
+    </view>
   </view>
 
-  <!-- 图例说明 -->
+  <!-- ====== 图例（分期）====== -->
   <view class="legend-bar">
     <view class="legend-item"><view class="legend-dot dot-awake"></view><text>清醒</text></view>
     <view class="legend-item"><view class="legend-dot dot-light"></view><text>浅睡</text></view>
@@ -22,44 +25,143 @@
     <view class="legend-item"><view class="legend-dot dot-rem"></view><text>REM</text></view>
   </view>
 
-  <!-- ========== View 柱状图（纯 DOM 实现）========== -->
+  <!-- ====== 分期柱状图（第5大节）====== -->
   <view class="chart-wrapper" wx:if="{{stagesData}}">
-    <!-- 图表标题 -->
     <view class="chart-title">睡眠分期曲线</view>
-
     <view class="chart-body">
-      <!-- Y轴标签 -->
       <view class="y-axis">
         <view class="y-label"><text>REM</text></view>
         <view class="y-label"><text>深睡</text></view>
         <view class="y-label"><text>浅睡</text></view>
         <view class="y-label"><text>清醒</text></view>
       </view>
-
-      <!-- 图表区域（网格 + 柱子） -->
       <view class="chart-area">
-        <!-- 4条网格线 + 48根柱子 -->
         <view class="chart-grid">
-          <!-- 网格线 -->
           <view class="grid-line"></view>
           <view class="grid-line"></view>
           <view class="grid-line"></view>
           <view class="grid-line"></view>
-
-          <!-- 柱子容器：flex 横排 -->
           <view class="bars-container">
             <block wx:for="{{stagesData}}" wx:key="time">
               <view class="bar-col">
-                <view class="bar {{item.stageClass}}" style="height: {{item.barHeight}}%;"></view>
+                <view class="bar {{item.stageClass}}" style="height: {{item.barHeightRpx}}rpx;"></view>
               </view>
             </block>
           </view>
         </view>
-
-        <!-- X轴时间标签 -->
         <view class="x-axis">
           <block wx:for="{{xLabels}}" wx:key="*this">
             <text class="x-label">{{item}}</text>
+          </block>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 噪音柱状图（第6大节）====== -->
+  <view class="chart-wrapper" wx:if="{{noiseData}}">
+    <view class="chart-title noise-title">环境噪音监测</view>
+    <!-- 图例 -->
+    <view class="noise-legend-bar">
+      <view class="legend-item"><view class="legend-dot dot-night"></view><text>夜间(安静)</text></view>
+      <view class="legend-item"><view class="legend-dot dot-day"></view><text>白天(正常)</text></view>
+    </view>
+    <!-- 柱状图 -->
+    <view class="noise-chart-body">
+      <!-- Y轴 (dB) -->
+      <view class="noise-y-axis">
+        <view class="ny-label"><text>70</text></view>
+        <view class="ny-label"><text>55</text></view>
+        <view class="ny-label"><text>40</text></view>
+        <view class="ny-label"><text>25</text></view>
+      </view>
+      <view class="noise-chart-area">
+        <view class="n-grid">
+          <view class="n-grid-line"></view>
+          <view class="n-grid-line"></view>
+          <view class="n-grid-line"></view>
+          <view class="n-grid-line"></view>
+          <!-- 144根柱子：夜间蓝色/白天橙色 -->
+          <view class="n-bars-container">
+            <block wx:for="{{noiseData}}" wx:key="time">
+              <view class="n-bar-col">
+                <view class="n-bar {{item.barClass}}" style="height: {{item.barHeightRpx}}rpx;"></view>
+              </view>
+            </block>
+          </view>
+        </view>
+        <!-- X轴时间标签 -->
+        <view class="n-x-axis">
+          <block wx:for="{{noiseXLabels}}" wx:key="*this">
+            <text class="nx-label">{{item}}</text>
+          </block>
+        </view>
+        <view class="n-unit"><text>单位: dB</text></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 睡眠评分汇总（第7大节）====== -->
+  <view class="chart-wrapper">
+    <view class="chart-title summary-title">睡眠评分趋势</view>
+
+    <!-- 日/周/月视图切换按钮 -->
+    <view class="period-switcher">
+      <button class="period-btn {{currentPeriod === 'day' ? 'active' : ''}}"
+              bindtap="switchPeriod" data-period="day">日视图</button>
+      <button class="period-btn {{currentPeriod === 'week' ? 'active' : ''}}"
+              bindtap="switchPeriod" data-period="week">周视图</button>
+      <button class="period-btn {{currentPeriod === 'month' ? 'active' : ''}}"
+              bindtap="switchPeriod" data-period="month">月视图</button>
+    </view>
+
+    <!-- 平均分展示 -->
+    <view class="avg-score-display" wx:if="{{summaryData}}">
+      <text class="avg-label">平均分</text>
+      <text class="avg-value">{{summaryData.avg_score}}</text>
+    </view>
+
+    <!-- 趋势图（View实现：数据点 + 参考线） -->
+    <view class="trend-chart-body" wx:if="{{summaryData}}">
+      <!-- Y轴 (分数 40-100) -->
+      <view class="trend-y-axis">
+        <view class="ty-label"><text>100</text></view>
+        <view class="ty-label"><text>85</text></view>
+        <view class="ty-label"><text>70</text></view>
+        <view class="ty-label"><text>55</text></view>
+        <view class="ty-label"><text>40</text></view>
+      </view>
+      <!-- 图表区域 -->
+      <view class="trend-chart-area">
+        <view class="t-grid">
+          <view class="t-grid-line"></view>
+          <view class="t-grid-line"></view>
+          <view class="t-grid-line"></view>
+          <view class="t-grid-line"></view>
+          <view class="t-grid-line"></view> <!-- 基线 -->
+
+          <!-- markLine: 平均参考线 -->
+          <view class="mark-line" style="bottom: {{summaryData.avgPct}}%;">
+            <text class="mark-text">平均 {{summaryData.avg_score}} 分</text>
+          </view>
+
+          <!-- 数据点容器 -->
+          <view class="t-dots-container">
+            <block wx:for="{{summaryData.points}}" wx:key="label">
+              <view class="t-dot-col">
+                <view class="t-dot {{item.colorClass}}"
+                      style="bottom: {{item.pctHeight}}rpx;"></view>
+                <!-- 柱子：从基线到数据点，半透明 -->
+                <view class="t-bar {{item.barClass}}"
+                      style="height: {{item.barHeightRpx}}rpx;"></view>
+              </view>
+            </block>
+          </view>
+        </view>
+        <!-- X轴标签 -->
+        <view class="t-x-axis">
+          <block wx:for="{{summaryData.labels}}" wx:key="*this">
+            <text class="tx-label">{{item}}</text>
           </block>
         </view>
       </view>
@@ -92,13 +194,13 @@
   </view>
 
   <!-- 空状态 -->
-  <view class="empty-state" wx:if="{{!loading && !stagesData && !error}}">
+  <view class="empty-state" wx:if="{{!loading && !stagesData && !noiseData && !error}}">
     <text class="empty-text">暂无数据，请选择日期查看</text>
   </view>
 
-  <!-- 错误提示 -->
+  <!-- 错误 -->
   <view class="error-state" wx:if="{{error}}">
     <text class="error-text">{{error}}</text>
-    <button class="retry-btn" bindtap="loadStages" size="mini">重试</button>
+    <button class="retry-btn" bindtap="loadData" size="mini">重试</button>
   </view>
 </view>
