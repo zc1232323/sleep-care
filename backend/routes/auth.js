@@ -27,6 +27,8 @@ const BCRYPT_ROUNDS = 10;
  */
 router.post('/register', async (req, res) => {
   const { phone, password, nickname } = req.body;
+  // 第10大节：支持 role 参数，默认 'patient'，只允许 patient/doctor
+  const role = req.body.role === 'doctor' ? 'doctor' : 'patient';
 
   // 1. 校验手机号和密码不能为空
   if (!phone || !password) {
@@ -75,12 +77,12 @@ router.post('/register', async (req, res) => {
     const displayName = nickname || `用户${phone.slice(-4)}`;
     const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
 
-    // 7. 插入新用户：role 默认 patient，status 默认 1
+    // 7. 插入新用户：role 默认 patient（第10大节支持传入 doctor），status 默认 1
     try {
       db.run(
         `INSERT INTO users (phone, password_hash, nickname, role, status, created_at, updated_at)
-         VALUES (?, ?, ?, 'patient', 1, ?, ?)`,
-        [phone, passwordHash, displayName, now, now]
+         VALUES (?, ?, ?, ?, 1, ?, ?)`,
+        [phone, passwordHash, displayName, role, now, now]
       );
     } catch (err) {
       if (err.message && err.message.includes('UNIQUE constraint failed')) {

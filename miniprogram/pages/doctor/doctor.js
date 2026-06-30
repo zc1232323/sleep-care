@@ -1,10 +1,10 @@
 /**
- * @file 医生授权管理页（第9大节）
+ * @file 医生授权管理页（第9+10大节）
  * @author 周灿
  * @date 2026-06-30
  *
  * 功能：
- *   - 输入医生手机号 → 添加授权（POST /api/doctor/grant）
+ *   - 从医生列表选择（GET /api/users/doctors），传 doctor_id 添加授权
  *   - 显示已授权医生列表（GET /api/doctor/granted）
  *   - 撤销授权（DELETE /api/doctor/revoke + 确认对话框）
  */
@@ -13,19 +13,55 @@ const app = getApp();
 
 Page({
   data: {
-    doctors: [],        // 已授权医生列表
-    inputPhone: '',     // 输入的手机号
-    adding: false,      // 添加中状态
-    loading: true,      // 列表加载中
+    allDoctors: [],        // 系统中所有医生（picker 用）
+    doctorNames: [],       // picker 显示的医生名称
+    selectedDoctorIndex: -1, // picker 选中的索引
+    selectedDoctorId: null,
+    grantedDoctors: [],   // 已授权医生列表
+    adding: false,
+    loading: true,
     error: ''
   },
 
   onShow() {
-    this.loadDoctors();
+    this.loadAllDoctors();
+    this.loadGrantedDoctors();
+  },
+
+  /** 加载所有医生（第10大节：loadDoctors） */
+  loadAllDoctors() {
+    const token = app.getToken();
+    if (!token) return;
+
+    wx.request({
+      url: `${app.globalData.baseUrl}/api/users/doctors`,
+      method: 'GET',
+      header: { Authorization: `Bearer ${token}` },
+      timeout: 10000,
+      success: (res) => {
+        if (res.statusCode === 200 && res.data.code === 0) {
+          const list = res.data.data || [];
+          const names = list.map(d => `${d.nickname} (${d.phone})`);
+          this.setData({ allDoctors: list, doctorNames: names });
+        }
+      }
+    });
+  },
+
+  /** 选择医生（selectDoctor） */
+  selectDoctor(e) {
+    const index = e.detail.value;
+    const doctor = this.data.allDoctors[index];
+    if (doctor) {
+      this.setData({
+        selectedDoctorIndex: index,
+        selectedDoctorId: doctor.id
+      });
+    }
   },
 
   /** 加载已授权的医生列表 */
-  loadDoctors() {
+  loadGrantedDoctors() {
     const token = app.getToken();
     if (!token) { this.setData({ error: '请先登录' }); return; }
 
@@ -38,7 +74,7 @@ Page({
       timeout: 10000,
       success: (res) => {
         if (res.statusCode === 200 && res.data.code === 0) {
-          this.setData({ doctors: res.data.data || [] });
+          this.setData({ grantedDoctors: res.data.data || [] });
         } else if (res.statusCode === 401) {
           app.clearToken();
           this.setData({ error: '登录已过期' });
@@ -53,16 +89,10 @@ Page({
     });
   },
 
-  /** 手机号输入 */
-  onPhoneInput(e) {
-    this.setData({ inputPhone: e.detail.value.trim() });
-  },
-
-  /** 添加医生授权 */
+  /** 添加医生授权（传 doctor_id） */
   addDoctor() {
-    const phone = this.data.inputPhone;
-    if (!phone || phone.length !== 11) {
-      wx.showToast({ title: '请输入11位手机号', icon: 'none' });
+    if (!this.data.selectedDoctorId) {
+      wx.showToast({ title: '请先选择医生', icon: 'none' });
       return;
     }
 
@@ -78,14 +108,13 @@ Page({
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      data: { phone },
+      data: { doctor_id: this.data.selectedDoctorId },
       timeout: 10000,
       success: (res) => {
         if (res.statusCode === 200 && res.data.code === 0) {
           wx.showToast({ title: '授权成功', icon: 'success' });
-          this.setData({ inputPhone: '' });
-          // 刷新列表
-          this.loadDoctors();
+          this.setData({ selectedDoctorIndex: -1, selectedDoctorId: null });
+          this.loadGrantedDoctors();
         } else if (res.statusCode === 200 && res.data.code === 1002) {
           wx.showToast({ title: '未找到该医生账号', icon: 'none', duration: 2500 });
         } else if (res.statusCode === 200 && res.data.code === 1003) {
@@ -134,7 +163,7 @@ Page({
       success: (res) => {
         if (res.statusCode === 200 && res.data.code === 0) {
           wx.showToast({ title: '已撤销', icon: 'success' });
-          this.loadDoctors();
+          this.loadGrantedDoctors();
         } else {
           wx.showToast({ title: res.data?.message || '撤销失败', icon: 'none' });
         }

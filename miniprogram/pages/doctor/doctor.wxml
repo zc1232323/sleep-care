@@ -1,4 +1,4 @@
-<!--pages/doctor/doctor.wxml - 第9大节：医生授权管理页面-->
+<!--pages/doctor/doctor.wxml - 第9+10大节：医生授权管理页面（选择医生）-->
 <view class="doctor-container">
 
   <!-- 顶部标题 -->
@@ -7,21 +7,22 @@
     <text class="page-desc">授权后，医生可查看您的睡眠数据</text>
   </view>
 
-  <!-- 添加医生区域 -->
+  <!-- 添加医生区域：picker 选择医生 -->
   <view class="add-section">
     <view class="input-row">
-      <text class="input-label">📱 医生手机号</text>
-      <input class="phone-input"
-             type="number"
-             maxlength="11"
-             placeholder="请输入医生注册手机号"
-             value="{{inputPhone}}"
-             bindinput="onPhoneInput"
-             confirm-type="done" />
+      <text class="input-label">📱 选择医生</text>
+      <picker mode="selector" range="{{doctorNames}}" bindchange="selectDoctor">
+        <view class="picker-value">
+          <text class="picker-text {{selectedDoctorIndex >= 0 ? '' : 'placeholder'}}">
+            {{selectedDoctorIndex >= 0 ? doctorNames[selectedDoctorIndex] : '点击选择要授权的医生'}}
+          </text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
       <button class="add-btn {{adding ? 'adding' : ''}}"
               bindtap="addDoctor"
               disabled="{{adding}}">
-        {{adding ? '添加中...' : '+ 添加'}}
+        {{adding ? '添加中...' : '+ 添加授权'}}
       </button>
     </view>
   </view>
@@ -32,16 +33,16 @@
   </view>
 
   <!-- 空状态（无授权） -->
-  <view class="empty-state" wx:if="{{!loading && doctors.length === 0}}">
+  <view class="empty-state" wx:if="{{!loading && grantedDoctors.length === 0}}">
     <text class="empty-emoji">🩺</text>
     <text class="empty-text">暂无已授权的医生</text>
-    <text class="empty-hint">在上方输入医生手机号添加</text>
+    <text class="empty-hint">在上方选择医生添加</text>
   </view>
 
-  <!-- 医生卡片列表 -->
-  <view class="doctor-list" wx:if="{{!loading && doctors.length > 0}}">
+  <!-- 已授权医生卡片列表 -->
+  <view class="doctor-list" wx:if="{{!loading && grantedDoctors.length > 0}}">
     
-    <block wx:for="{{doctors}}" wx:key="id">
+    <block wx:for="{{grantedDoctors}}" wx:key="id">
       <view class="doctor-card">
         
         <!-- 头部：医生信息 -->
@@ -81,7 +82,7 @@
   <!-- 错误提示 -->
   <view class="error-state" wx:if="{{error}}">
     <text class="error-text">{{error}}</text>
-    <button class="retry-btn" bindtap="loadDoctors" size="mini">重试</button>
+    <button class="retry-btn" bindtap="loadGrantedDoctors" size="mini">重试</button>
   </view>
 
 </view>

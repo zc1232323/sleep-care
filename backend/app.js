@@ -14,6 +14,7 @@ const deviceRoutes = require('./routes/devices');
 const reportRoutes = require('./routes/reports');
 const settingRoutes = require('./routes/settings');
 const doctorRoutes = require('./routes/doctor');
+const userRoutes = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,7 +40,11 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/devices', deviceRoutes);
 app.use('/api/sleep/report', reportRoutes);  // 包含 /daily 和 /stages
 app.use('/api/setting', settingRoutes);     // 第8大节：作息设置
-app.use('/api/doctor', doctorRoutes);      // 第9大节：医生授权管理
+app.use('/api/doctor', doctorRoutes);      // 第9+10大节：医生授权管理
+app.use('/api/users', userRoutes);         // 第10大节：用户列表
+
+// 第10大节：Express 静态文件服务（医生端 Web 页面）
+app.use(express.static('public'));
 
 // 启动服务
 initDatabase()
