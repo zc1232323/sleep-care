@@ -56,3 +56,4 @@ venv/
 # AI / LLM
 .claude/
 .gpt/
+.workbuddy/
