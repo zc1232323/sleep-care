@@ -1,0 +1,87 @@
+<!--pages/doctor/doctor.wxml - 第9大节：医生授权管理页面-->
+<view class="doctor-container">
+
+  <!-- 顶部标题 -->
+  <view class="page-header">
+    <text class="page-title">👨‍⚕️ 医生授权管理</text>
+    <text class="page-desc">授权后，医生可查看您的睡眠数据</text>
+  </view>
+
+  <!-- 添加医生区域 -->
+  <view class="add-section">
+    <view class="input-row">
+      <text class="input-label">📱 医生手机号</text>
+      <input class="phone-input"
+             type="number"
+             maxlength="11"
+             placeholder="请输入医生注册手机号"
+             value="{{inputPhone}}"
+             bindinput="onPhoneInput"
+             confirm-type="done" />
+      <button class="add-btn {{adding ? 'adding' : ''}}"
+              bindtap="addDoctor"
+              disabled="{{adding}}">
+        {{adding ? '添加中...' : '+ 添加'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-box" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 空状态（无授权） -->
+  <view class="empty-state" wx:if="{{!loading && doctors.length === 0}}">
+    <text class="empty-emoji">🩺</text>
+    <text class="empty-text">暂无已授权的医生</text>
+    <text class="empty-hint">在上方输入医生手机号添加</text>
+  </view>
+
+  <!-- 医生卡片列表 -->
+  <view class="doctor-list" wx:if="{{!loading && doctors.length > 0}}">
+    
+    <block wx:for="{{doctors}}" wx:key="id">
+      <view class="doctor-card">
+        
+        <!-- 头部：医生信息 -->
+        <view class="card-top">
+          <view class="doc-avatar">
+            <text class="avatar-icon">👨‍⚕️</text>
+          </view>
+          <view class="doc-info">
+            <text class="doc-name">{{item.doctor_name}}</text>
+            <text class="doc-phone">{{item.doctor_phone}}</text>
+          </view>
+          <view class="status-tag status-{{item.status}}">
+            {{item.status === 'pending' ? '待确认' : '已授权'}}
+          </view>
+        </view>
+
+        <!-- 底部：过期时间 + 撤销按钮 -->
+        <view class="card-bottom">
+          <view class="expire-info">
+            <text class="expire-label">有效期至：</text>
+            <text class="expire-date">{{item.expire_date}}</text>
+          </view>
+          <button class="revoke-btn"
+                  id="{{item.id}}"
+                  data-id="{{item.id}}"
+                  data-name="{{item.doctor_name}}"
+                  bindtap="revokeDoctor">
+            撤销
+          </button>
+        </view>
+
+      </view>
+    </block>
+
+  </view>
+
+  <!-- 错误提示 -->
+  <view class="error-state" wx:if="{{error}}">
+    <text class="error-text">{{error}}</text>
+    <button class="retry-btn" bindtap="loadDoctors" size="mini">重试</button>
+  </view>
+
+</view>

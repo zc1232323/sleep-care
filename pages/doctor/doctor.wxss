@@ -1,0 +1,237 @@
+/* pages/doctor/doctor.wxss - 第9大节：医生授权管理页面样式 */
+
+.doctor-container {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding: 24rpx 20rpx;
+}
+
+/* ====== 页面头部 ====== */
+.page-header {
+  text-align: center;
+  padding-bottom: 28rpx;
+}
+.page-title {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #222;
+  display: block;
+}
+.page-desc {
+  font-size: 25rpx;
+  color: #999;
+  display: block;
+  margin-top: 6rpx;
+}
+
+/* ====== 添加区域 ====== */
+.add-section {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx 24rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0,0,0,0.04);
+  margin-bottom: 24rpx;
+}
+
+.input-row {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.input-label {
+  font-size: 29rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.phone-input {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 14rpx;
+  padding: 0 24rpx;
+  font-size: 32rpx;
+  box-sizing: border-box;
+}
+.phone-input:focus {
+  border-color: #1a73e8;
+}
+
+.add-btn {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  background: #1a73e8;
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 700;
+  border-radius: 40rpx;
+  text-align: center;
+  border: none;
+  letter-spacing: 4rpx;
+}
+.add-btn.adding {
+  opacity: 0.7;
+  background: #bbb;
+}
+.add-btn::after { border: none; }
+
+/* ====== 加载中 ====== */
+.loading-box {
+  text-align: center;
+  padding-top: 300rpx;
+}
+.loading-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* ====== 空状态 ====== */
+.empty-state {
+  text-align: center;
+  padding-top: 200rpx;
+}
+.empty-emoji {
+  font-size: 100rpx;
+  display: block;
+  margin-bottom: 20rpx;
+}
+.empty-text {
+  font-size: 30rpx;
+  color: #666;
+  display: block;
+  margin-bottom: 10rpx;
+}
+.empty-hint {
+  font-size: 25rpx;
+  color: #bbb;
+  display: block;
+}
+
+/* ====== 医生卡片列表 ====== */
+.doctor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.doctor-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0,0,0,0.04);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.doc-avatar {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 50%;
+  background: #e8f4fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.avatar-icon {
+  font-size: 38rpx;
+}
+
+.doc-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.doc-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #222;
+}
+.doc-phone {
+  font-size: 26rpx;
+  color: #888;
+}
+
+.status-tag {
+  padding: 6rpx 18rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+.status-active {
+  background: #d3f9d8;
+  color: #198754;
+}
+
+.card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid #eee;
+}
+
+.expire-info {
+  display: flex;
+  align-items: baseline;
+  gap: 6rpx;
+}
+.expire-label {
+  font-size: 24rpx;
+  color: #999;
+}
+.expire-date {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 600;
+}
+
+.revoke-btn {
+  width: 120rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  background: #fff;
+  color: #e53935;
+  font-size: 26rpx;
+  font-weight: 600;
+  border: 2rpx solid #ffcdd2;
+  border-radius: 30rpx;
+  text-align: center;
+  padding: 0;
+}
+.revoke-btn::after { border: none; }
+.revoke-btn:hover {
+  background: #fce4ec;
+}
+
+/* 错误 */
+.error-state {
+  text-align: center;
+  padding-top: 200rpx;
+}
+.error-text {
+  font-size: 28rpx;
+  color: #e53935;
+  display: block;
+  margin-bottom: 20rpx;
+}
+.retry-btn {
+  background: #1a73e8 !important;
+  color: #fff !important;
+}
