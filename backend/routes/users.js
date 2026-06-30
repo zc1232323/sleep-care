@@ -8,10 +8,10 @@
 
 const express = require('express');
 const { getDb } = require('../db/connection');
-const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
-router.use(authenticateToken);
+// GET /api/users/doctors 为公开接口，患者未登录即可查看医生列表
+// 如需为其他用户路由添加认证，请在具体路由上单独挂载 authenticateToken
 
 router.get('/doctors', async (req, res) => {
   try {

@@ -487,7 +487,7 @@
     }
 
     // 获取已有建议
-    const noteRes = await get(`/api/doctor/note?auth_id=${authId}`);
+    const noteRes = await get(`/api/doctor/note?patient_id=${patientId}`);
     document.getElementById('doctorNote').value = (noteRes.code === 0 && noteRes.data) ? noteRes.data.note : '';
   }
 
@@ -528,7 +528,12 @@
   // 保存建议
   async function saveNote() {
     const note = document.getElementById('doctorNote').value;
-    const res = await put('/api/doctor/note', { auth_id: currentAuthId, note });
+    const patientId = currentPatient ? currentPatient.id : null;
+    if (!patientId) {
+      showToast('未选择患者');
+      return;
+    }
+    const res = await put('/api/doctor/note', { patient_id: patientId, note });
     if (res.code === 0) {
       showToast('建议保存成功');
     } else {

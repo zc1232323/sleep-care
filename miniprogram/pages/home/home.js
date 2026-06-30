@@ -178,7 +178,7 @@ Page({
   /** 跳转到医生授权页（第9大节） */
   goToDoctor() {
     wx.navigateTo({
-      url: '/pages/doctor/doctor'
+      url: '/pages/doctors/doctors'
     });
   }
 });

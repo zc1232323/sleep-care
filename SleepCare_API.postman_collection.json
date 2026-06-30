@@ -397,14 +397,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"auth_id\": 1,\n  \"note\": \"建议保持规律作息，睡前避免使用手机。\"\n}"
+              "raw": "{\n  \"patient_id\": 1,\n  \"note\": \"建议保持规律作息，睡前避免使用手机。\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/doctor/note",
               "host": ["{{baseUrl}}"],
               "path": ["api", "doctor", "note"]
             },
-            "description": "保存/更新干预建议。auth_id 为 doctor_authorizations 表的主键。"
+            "description": "保存/更新干预建议。patient_id 为患者 users 表的主键。"
           },
           "response": []
         },
@@ -416,14 +416,14 @@
               { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/doctor/note?auth_id=1",
+              "raw": "{{baseUrl}}/api/doctor/note?patient_id=1",
               "host": ["{{baseUrl}}"],
               "path": ["api", "doctor", "note"],
               "query": [
-                { "key": "auth_id", "value": "1" }
+                { "key": "patient_id", "value": "1" }
               ]
             },
-            "description": "获取指定授权记录的干预建议。"
+            "description": "获取指定患者的干预建议。"
           },
           "response": []
         },

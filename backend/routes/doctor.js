@@ -382,36 +382,38 @@ router.get('/patient/data', async (req, res) => {
 
 /**
  * PUT /api/doctor/note
- * Body: { auth_id, note }
+ * Body: { patient_id, note }
  * 医生保存/更新干预建议（写入 doctor_authorizations.doctor_note）
  */
 router.put('/note', async (req, res) => {
   const doctorId = req.user.id;
-  const { auth_id, note } = req.body;
+  const { patient_id, note } = req.body;
 
-  if (!auth_id) {
-    return res.json({ code: 1001, message: '缺少授权ID', data: null });
+  if (!patient_id) {
+    return res.json({ code: 1001, message: '缺少患者ID', data: null });
   }
 
   try {
     const db = await getDb();
 
     const check = db.exec(
-      `SELECT id FROM doctor_authorizations WHERE id = ? AND doctor_id = ? AND status = 'active'`,
-      [auth_id, doctorId]
+      `SELECT id FROM doctor_authorizations WHERE patient_id = ? AND doctor_id = ? AND status = 'active'`,
+      [patient_id, doctorId]
     );
 
     if (check.length === 0 || check[0].values.length === 0) {
       return res.json({ code: 1002, message: '未找到有效的授权记录', data: null });
     }
 
+    const authId = check[0].values[0][0];
+
     db.run(
       `UPDATE doctor_authorizations SET doctor_note = ?, updated_at = datetime('now','localtime') WHERE id = ?`,
-      [note || '', auth_id]
+      [note || '', authId]
     );
     saveDb();
 
-    return res.json({ code: 0, message: '建议保存成功', data: { auth_id, note } });
+    return res.json({ code: 0, message: '建议保存成功', data: { patient_id, note } });
 
   } catch (err) {
     console.error('[Doctor] 保存建议失败:', err);
@@ -421,22 +423,22 @@ router.put('/note', async (req, res) => {
 
 /**
  * GET /api/doctor/note
- * Query: auth_id
+ * Query: patient_id
  */
 router.get('/note', async (req, res) => {
   const doctorId = req.user.id;
-  const authId = req.query.auth_id;
+  const patientId = req.query.patient_id;
 
-  if (!authId) {
-    return res.json({ code: 1001, message: '缺少授权ID', data: null });
+  if (!patientId) {
+    return res.json({ code: 1001, message: '缺少患者ID', data: null });
   }
 
   try {
     const db = await getDb();
 
     const noteRes = db.exec(
-      `SELECT doctor_note FROM doctor_authorizations WHERE id = ? AND doctor_id = ? AND status = 'active'`,
-      [authId, doctorId]
+      `SELECT doctor_note FROM doctor_authorizations WHERE patient_id = ? AND doctor_id = ? AND status = 'active'`,
+      [patientId, doctorId]
     );
 
     if (noteRes.length > 0 && noteRes[0].values.length > 0) {
