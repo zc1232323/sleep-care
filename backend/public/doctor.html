@@ -114,6 +114,7 @@
     .patient-info { flex: 1; }
     .patient-name { font-size: 18px; font-weight: 700; color: #222; margin-bottom: 4px; }
     .patient-meta { font-size: 13px; color: #888; }
+    .patient-note { font-size: 13px; color: #e67700; margin-top: 8px; padding: 8px 12px; background: #fff8e1; border-radius: 8px; }
     .patient-score { font-size: 24px; font-weight: 800; color: #1a73e8; margin-right: 16px; }
     .status-tag {
       padding: 5px 12px;
@@ -425,6 +426,7 @@
               <span class="status-tag ${statusClass}">${statusText}</span>
               有效期至 ${p.expire_date}
             </div>
+            ${p.doctor_note ? `<div class="patient-note">📝 ${p.doctor_note}</div>` : ''}
           </div>
           <div style="display:flex;align-items:center;">
             <div class="patient-score">${scoreText}</div>

@@ -7,6 +7,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const { initDatabase } = require('./db/init');
 const authRoutes = require('./routes/auth');
@@ -44,7 +45,7 @@ app.use('/api/doctor', doctorRoutes);      // 第9+10大节：医生授权管理
 app.use('/api/users', userRoutes);         // 第10大节：用户列表
 
 // 第10大节：Express 静态文件服务（医生端 Web 页面）
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 启动服务
 initDatabase()

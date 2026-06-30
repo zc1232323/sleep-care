@@ -435,7 +435,7 @@ router.get('/note', async (req, res) => {
     const db = await getDb();
 
     const noteRes = db.exec(
-      `SELECT doctor_note FROM doctor_authorizations WHERE id = ? AND doctor_id = ?`,
+      `SELECT doctor_note FROM doctor_authorizations WHERE id = ? AND doctor_id = ? AND status = 'active'`,
       [authId, doctorId]
     );
 
