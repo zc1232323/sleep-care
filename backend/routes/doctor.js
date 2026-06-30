@@ -104,10 +104,11 @@ router.post('/grant', async (req, res) => {
        VALUES (?, ?, 'pending', ?, datetime('now','localtime'))`,
       [userId, docId, expireDateStr]
     );
-    saveDb();
 
     const lastIdRes = db.exec('SELECT last_insert_rowid()');
     const newId = lastIdRes[0]?.values[0][0] || 0;
+
+    saveDb();
 
     return res.json({
       code: 0,
