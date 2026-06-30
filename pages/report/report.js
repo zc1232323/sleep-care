@@ -56,12 +56,15 @@ Page({
     this.loadData();
   },
 
-  /** 从首页 switchTab 过来时，读取 globalData 中的日期 */
+  /** 从首页 switchTab 过来时，读取 storage 中的日期 */
   onShow() {
-    if (app.globalData.selectedReportDate && this.data.selectedDate !== app.globalData.selectedReportDate) {
-      this.setData({ selectedDate: app.globalData.selectedReportDate });
+    const storageDate = wx.getStorageSync('selectedReportDate');
+    if (storageDate && this.data.selectedDate !== storageDate) {
+      console.log('[Report] 收到首页日期:', storageDate, '当前:', this.data.selectedDate);
+      this.setData({ selectedDate: storageDate });
       this.loadData();
-      app.globalData.selectedReportDate = '';
+      // 用完清掉
+      wx.removeStorageSync('selectedReportDate');
     }
   },
 
