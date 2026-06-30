@@ -154,11 +154,17 @@ Page({
 
   /**
    * 跳转到详细分期报告页（第5大节）
+   * 注意：报告页是 tabBar 页面，必须用 switchTab 不能用 navigateTo
+   * 通过 globalData 传递日期参数（switchTab 不支持 ?参数）
    */
   goToReport() {
-    const date = this.data.reportData ? this.data.reportData.report_date : this.data.reportDate;
-    wx.navigateTo({
-      url: `/pages/report/report?date=${date}`
+    const date = this.data.reportData ? this.data.reportData.report_date : '';
+    // 把选中日期存到全局，report 页 onShow 时读取
+    if (date) {
+      app.globalData.selectedReportDate = date;
+    }
+    wx.switchTab({
+      url: '/pages/report/report'
     });
   }
 });

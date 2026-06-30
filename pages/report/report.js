@@ -56,6 +56,15 @@ Page({
     this.loadData();
   },
 
+  /** 从首页 switchTab 过来时，读取 globalData 中的日期 */
+  onShow() {
+    if (app.globalData.selectedReportDate && this.data.selectedDate !== app.globalData.selectedReportDate) {
+      this.setData({ selectedDate: app.globalData.selectedReportDate });
+      this.loadData();
+      app.globalData.selectedReportDate = '';
+    }
+  },
+
   /**
    * 加载全部数据（分期 + 噪音 + 汇总评分）
    */
@@ -92,7 +101,7 @@ Page({
     const token = app.getToken();
     if (!token) return;
     wx.request({
-      url: `${app.globalData.baseUrl}/api/sleep/summary?period=${this.data.currentPeriod}`,
+      url: `${app.globalData.baseUrl}/api/sleep/report/summary?period=${this.data.currentPeriod}`,
       method: 'GET',
       header: { Authorization: `Bearer ${token}` },
       timeout: 15000,
