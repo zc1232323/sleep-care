@@ -73,11 +73,15 @@ router.post('/grant', async (req, res) => {
     );
     saveDb();
 
+    // 获取刚插入的 id
+    const lastIdRes = db.exec('SELECT last_insert_rowid()');
+    const newId = lastIdRes[0]?.values[0][0] || 0;
+
     return res.json({
       code: 0,
       message: '授权请求已发送',
       data: {
-        id: lastInsertRowid,
+        id: newId,
         doctor_id: docId,
         doctor_name: docName,
         doctor_phone: docPhone,
