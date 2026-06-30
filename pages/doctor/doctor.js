@@ -13,11 +13,10 @@ const app = getApp();
 
 Page({
   data: {
-    allDoctors: [],        // 系统中所有医生（picker 用）
-    doctorNames: [],       // picker 显示的医生名称
-    selectedDoctorIndex: -1, // picker 选中的索引
-    selectedDoctorId: null,
-    grantedDoctors: [],   // 已授权医生列表
+    allDoctors: [],            // 系统中所有医生（卡片列表）
+    selectedDoctorId: null,    // 当前选中的医生 id
+    selectedDoctorName: '',    // 当前选中的医生姓名
+    grantedDoctors: [],        // 已授权医生列表
     adding: false,
     loading: true,
     error: ''
@@ -48,14 +47,15 @@ Page({
     });
   },
 
-  /** 选择医生（selectDoctor） */
+  /** 选择医生（点击卡片高亮） */
   selectDoctor(e) {
-    const index = e.detail.value;
-    const doctor = this.data.allDoctors[index];
+    const id = e.currentTarget.dataset.id;
+    const name = e.currentTarget.dataset.name;
+    const doctor = this.data.allDoctors.find(d => d.id == id);
     if (doctor) {
       this.setData({
-        selectedDoctorIndex: index,
-        selectedDoctorId: doctor.id
+        selectedDoctorId: doctor.id,
+        selectedDoctorName: doctor.nickname || doctor.name || name || '未知医生'
       });
     }
   },
@@ -113,7 +113,7 @@ Page({
       success: (res) => {
         if (res.statusCode === 200 && res.data.code === 0) {
           wx.showToast({ title: '授权成功', icon: 'success' });
-          this.setData({ selectedDoctorIndex: -1, selectedDoctorId: null });
+          this.setData({ selectedDoctorId: null, selectedDoctorName: '', adding: false });
           this.loadGrantedDoctors();
         } else if (res.statusCode === 200 && res.data.code === 1002) {
           wx.showToast({ title: '未找到该医生账号', icon: 'none', duration: 2500 });

@@ -217,15 +217,19 @@
       <label class="form-label">密码</label>
       <input type="password" id="password" class="form-input" placeholder="请输入密码" value="123456">
     </div>
+    <div class="form-group" id="confirmGroup" style="display:none;">
+      <label class="form-label">确认密码</label>
+      <input type="password" id="confirmPassword" class="form-input" placeholder="请再次输入密码">
+    </div>
     <div class="form-group" id="nicknameGroup" style="display:none;">
-      <label class="form-label">昵称</label>
-      <input type="text" id="nickname" class="form-input" placeholder="请输入昵称">
+      <label class="form-label">姓名</label>
+      <input type="text" id="nickname" class="form-input" placeholder="请输入姓名">
     </div>
 
     <button class="login-btn" id="submitBtn">登录</button>
     <div class="error-tip" id="loginError"></div>
 
-    <button class="switch-btn" id="switchBtn">还没有账号？立即注册</button>
+    <button class="switch-btn" id="switchBtn">还没有账号？去注册</button>
   </div>
 
   <!-- 患者列表页 -->
@@ -309,16 +313,19 @@
   // 切换登录/注册
   switchBtn.addEventListener('click', () => {
     isRegister = !isRegister;
+    loginError.textContent = '';
     if (isRegister) {
       submitBtn.textContent = '注册';
-      switchBtn.textContent = '已有账号？立即登录';
+      switchBtn.textContent = '已有账号？去登录';
       loginModeText.textContent = '医生注册（role=doctor）';
       nicknameGroup.style.display = 'block';
+      document.getElementById('confirmGroup').style.display = 'block';
     } else {
       submitBtn.textContent = '登录';
-      switchBtn.textContent = '还没有账号？立即注册';
+      switchBtn.textContent = '还没有账号？去注册';
       loginModeText.textContent = '医生登录';
       nicknameGroup.style.display = 'none';
+      document.getElementById('confirmGroup').style.display = 'none';
     }
   });
 
@@ -347,14 +354,31 @@
   async function doRegister() {
     const phone = document.getElementById('phone').value.trim();
     const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
     const nickname = document.getElementById('nickname').value.trim() || '医生';
     loginError.textContent = '';
+
+    if (password !== confirmPassword) {
+      loginError.textContent = '两次输入的密码不一致';
+      return;
+    }
+    if (password.length < 6) {
+      loginError.textContent = '密码长度不能少于6位';
+      return;
+    }
 
     const res = await post('/api/v1/auth/register', { phone, password, nickname, role: 'doctor' });
     if (res.code === 0) {
       showToast('注册成功，请登录');
+      document.getElementById('password').value = '';
+      document.getElementById('confirmPassword').value = '';
+      document.getElementById('nickname').value = '';
       isRegister = false;
-      switchBtn.click();
+      submitBtn.textContent = '登录';
+      switchBtn.textContent = '还没有账号？去注册';
+      loginModeText.textContent = '医生登录';
+      nicknameGroup.style.display = 'none';
+      document.getElementById('confirmGroup').style.display = 'none';
     } else {
       loginError.textContent = res.message || '注册失败';
     }

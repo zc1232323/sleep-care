@@ -1,51 +1,74 @@
-<!--pages/doctor/doctor.wxml - 第9+10大节：医生授权管理页面（选择医生）-->
+<!--pages/doctor/doctor.wxml - 第10大节：医生授权管理页（卡片列表选择医生）-->
 <view class="doctor-container">
 
   <!-- 顶部标题 -->
   <view class="page-header">
     <text class="page-title">👨‍⚕️ 医生授权管理</text>
-    <text class="page-desc">授权后，医生可查看您的睡眠数据</text>
+    <text class="page-desc">选择一位医生，授权其查看您的睡眠数据</text>
   </view>
 
-  <!-- 添加医生区域：picker 选择医生 -->
-  <view class="add-section">
-    <view class="input-row">
-      <text class="input-label">📱 选择医生</text>
-      <picker mode="selector" range="{{doctorNames}}" bindchange="selectDoctor">
-        <view class="picker-value">
-          <text class="picker-text {{selectedDoctorIndex >= 0 ? '' : 'placeholder'}}">
-            {{selectedDoctorIndex >= 0 ? doctorNames[selectedDoctorIndex] : '点击选择要授权的医生'}}
-          </text>
-          <text class="picker-arrow">›</text>
-        </view>
-      </picker>
-      <button class="add-btn {{adding ? 'adding' : ''}}"
-              bindtap="addDoctor"
-              disabled="{{adding}}">
-        {{adding ? '添加中...' : '+ 添加授权'}}
-      </button>
+  <!-- 医生卡片列表选择区 -->
+  <view class="select-section">
+    <text class="section-label">选择要授权的医生</text>
+
+    <view wx:if="{{allDoctors.length === 0}}" class="empty-doctors">
+      <text class="empty-emoji">🩺</text>
+      <text class="empty-text">暂无医生账号</text>
     </view>
+
+    <view class="doctor-grid" wx:if="{{allDoctors.length > 0}}">
+      <block wx:for="{{allDoctors}}" wx:key="id">
+        <view
+          class="select-card {{selectedDoctorId === item.id ? 'selected' : ''}}"
+          data-id="{{item.id}}"
+          data-name="{{item.nickname}}"
+          bindtap="selectDoctor"
+        >
+          <view class="select-avatar">
+            <text class="avatar-icon">👨‍⚕️</text>
+          </view>
+          <view class="select-info">
+            <text class="select-name">{{item.nickname}}</text>
+            <text class="select-phone">{{item.phone}}</text>
+          </view>
+          <view class="check-icon" wx:if="{{selectedDoctorId === item.id}}">✓</view>
+        </view>
+      </block>
+    </view>
+
+    <!-- 已选择提示 -->
+    <view class="selected-bar" wx:if="{{selectedDoctorId}}">
+      <text class="selected-text">已选择：{{selectedDoctorName}}</text>
+    </view>
+    <view class="selected-bar placeholder" wx:else>
+      <text class="selected-text">请选择一位医生</text>
+    </view>
+
+    <button
+      class="grant-btn {{adding || !selectedDoctorId ? 'disabled' : ''}}"
+      bindtap="addDoctor"
+      disabled="{{adding || !selectedDoctorId}}"
+    >
+      {{adding ? '授权中...' : '添加授权'}}
+    </button>
   </view>
 
-  <!-- 加载中 -->
+  <!-- 已授权医生列表 -->
+  <view class="section-title">已授权医生</view>
+
   <view class="loading-box" wx:if="{{loading}}">
     <text class="loading-text">加载中...</text>
   </view>
 
-  <!-- 空状态（无授权） -->
   <view class="empty-state" wx:if="{{!loading && grantedDoctors.length === 0}}">
     <text class="empty-emoji">🩺</text>
     <text class="empty-text">暂无已授权的医生</text>
-    <text class="empty-hint">在上方选择医生添加</text>
+    <text class="empty-hint">在上方选择医生并添加授权</text>
   </view>
 
-  <!-- 已授权医生卡片列表 -->
   <view class="doctor-list" wx:if="{{!loading && grantedDoctors.length > 0}}">
-    
     <block wx:for="{{grantedDoctors}}" wx:key="id">
       <view class="doctor-card">
-        
-        <!-- 头部：医生信息 -->
         <view class="card-top">
           <view class="doc-avatar">
             <text class="avatar-icon">👨‍⚕️</text>
@@ -58,25 +81,21 @@
             {{item.status === 'pending' ? '待确认' : '已授权'}}
           </view>
         </view>
-
-        <!-- 底部：过期时间 + 撤销按钮 -->
         <view class="card-bottom">
           <view class="expire-info">
             <text class="expire-label">有效期至：</text>
             <text class="expire-date">{{item.expire_date}}</text>
           </view>
-          <button class="revoke-btn"
-                  id="{{item.id}}"
-                  data-id="{{item.id}}"
-                  data-name="{{item.doctor_name}}"
-                  bindtap="revokeDoctor">
-            撤销
-          </button>
+          <button
+            class="revoke-btn"
+            id="{{item.id}}"
+            data-id="{{item.id}}"
+            data-name="{{item.doctor_name}}"
+            bindtap="revokeDoctor"
+          >撤销</button>
         </view>
-
       </view>
     </block>
-
   </view>
 
   <!-- 错误提示 -->

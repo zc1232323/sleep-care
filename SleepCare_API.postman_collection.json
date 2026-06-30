@@ -1,0 +1,462 @@
+{
+  "info": {
+    "name": "SleepCare 智能睡眠环境调控 API",
+    "description": "# SleepCare 后端 API 接口集合\n\n## 环境变量说明\n- `baseUrl`: 后端地址，默认 `http://localhost:3000`\n- `token`: JWT 令牌，登录后自动填充\n\n## 统一响应格式\n```json\n{\n  \"code\": 0,      // 0=成功, 1=认证失败, 1001=业务异常\n  \"message\": \"\",\n  \"data\": null\n}\n```\n\n## 使用步骤\n1. 用「注册」接口创建一个测试账号\n2. 用「登录」接口获取 token（会自动存入环境变量）\n3. 其余接口自动携带 token，直接调用即可",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "认证",
+      "item": [
+        {
+          "name": "注册",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"13800138000\",\n  \"password\": \"123456\",\n  \"nickname\": \"测试用户\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "用户注册接口。nickname 可选，phone 必须为 11 位数字，password 长度 >= 6。"
+          },
+          "response": [
+            {
+              "name": "注册成功",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"code\": 0,\n  \"message\": \"注册成功\",\n  \"data\": {\n    \"id\": 1,\n    \"phone\": \"13800138000\",\n    \"nickname\": \"测试用户\",\n    \"role\": \"patient\"\n  }\n}"
+            },
+            {
+              "name": "手机号已注册",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"code\": 1001,\n  \"message\": \"该手机号已注册\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "登录",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 登录成功后自动提取 token 并存入环境变量",
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.code === 0 && json.data && json.data.token) {",
+                  "        pm.environment.set('token', json.data.token);",
+                  "        console.log('Token 已自动保存到环境变量');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"13800138000\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "用户登录接口。成功返回 JWT token（有效期 7 天），会自动存入环境变量 `{{token}}`。"
+          },
+          "response": [
+            {
+              "name": "登录成功",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"code\": 0,\n  \"message\": \"登录成功\",\n  \"data\": {\n    \"token\": \"eyJhbGciOiJIUzI1NiIs...\",\n    \"id\": 1,\n    \"phone\": \"13800138000\",\n    \"nickname\": \"测试用户\",\n    \"role\": \"patient\"\n  }\n}"
+            },
+            {
+              "name": "密码错误",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"code\": 1001,\n  \"message\": \"密码错误\",\n  \"data\": null\n}"
+            }
+          ]
+        }
+      ],
+      "description": "认证相关接口（注册/登录），无需 JWT Token"
+    },
+    {
+      "name": "设备管理",
+      "item": [
+        {
+          "name": "获取设备列表",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/devices/list",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "devices", "list"]
+            },
+            "description": "获取当前用户绑定的所有设备列表。"
+          },
+          "response": [
+            {
+              "name": "成功",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"code\": 0,\n  \"message\": \"success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"serial_no\": \"VIRaB3xY9kLm2NpQ7Wx\",\n      \"user_id\": 1,\n      \"nickname\": \"我的设备\",\n      \"is_virtual\": 1,\n      \"online_status\": 1,\n      \"created_at\": \"2026-06-29 20:00:00\",\n      \"updated_at\": \"2026-06-29 20:00:00\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "添加虚拟设备",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_virtual\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/devices/add",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "devices", "add"]
+            },
+            "description": "添加虚拟设备。系统自动生成 VIR + 16 位随机序列号。"
+          },
+          "response": [
+            {
+              "name": "添加成功",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"code\": 0,\n  \"message\": \"添加成功\",\n  \"data\": {\n    \"id\": 2,\n    \"serial_no\": \"VIRaB3xY9kLm2NpQ7Wx\",\n    \"user_id\": 1,\n    \"nickname\": \"我的设备\",\n    \"is_virtual\": 1,\n    \"online_status\": 1,\n    \"created_at\": \"2026-06-30 10:00:00\",\n    \"updated_at\": \"2026-06-30 10:00:00\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "添加手动序列号设备",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_serial\": \"aB3xY9kLm2NpQ7Wx\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/devices/add",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "devices", "add"]
+            },
+            "description": "通过手动输入 16 位字母数字序列号绑定设备。"
+          },
+          "response": []
+        },
+        {
+          "name": "修改设备昵称",
+          "event": [],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nickname\": \"卧室睡眠带\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/devices/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "devices", "1"]
+            },
+            "description": "修改指定设备的昵称。`:id` 为设备主键 ID（替换路径中的数字）。"
+          },
+          "response": []
+        },
+        {
+          "name": "删除设备",
+          "event": [],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/devices/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "devices", "1"]
+            },
+            "description": "删除指定设备（硬删除）。`:id` 为设备主键 ID（替换路径中的数字）。"
+          },
+          "response": []
+        }
+      ],
+      "description": "设备 CRUD 接口，全部需要 JWT Token。"
+    },
+    {
+      "name": "睡眠报告",
+      "item": [
+        {
+          "name": "获取每日睡眠报告",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sleep/report/daily?date=2026-06-29",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sleep", "report", "daily"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-06-29",
+                  "description": "日期 YYYY-MM-DD，默认为昨天",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "获取指定日期的完整睡眠报告。包含评分、各阶段时长、心率曲线、睡眠分期、噪音等数据。"
+          },
+          "response": [
+            {
+              "name": "成功",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"code\": 0,\n  \"message\": \"success\",\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"device_id\": 1,\n    \"report_date\": \"2026-06-29\",\n    \"sleep_score\": 85,\n    \"total_sleep_minutes\": 420,\n    \"deep_sleep_minutes\": 84,\n    \"light_sleep_minutes\": 210,\n    \"rem_sleep_minutes\": 105,\n    \"awake_minutes\": 15,\n    \"awake_count\": 2,\n    \"heart_rate_json\": [\n      { \"time\": \"22:30\", \"bpm\": 75 },\n      { \"time\": \"23:00\", \"bpm\": 68 },\n      { \"time\": \"23:30\", \"bpm\": 60 },\n      { \"time\": \"00:00\", \"bpm\": 55 },\n      { \"time\": \"04:00\", \"bpm\": 65 },\n      { \"time\": \"06:00\", \"bpm\": 80 }\n    ],\n    \"sleep_stages_json\": [\n      { \"stage\": \"deep\", \"start\": \"23:00\", \"end\": \"00:30\", \"duration\": 90 },\n      { \"stage\": \"light\", \"start\": \"00:30\", \"end\": \"02:00\", \"duration\": 90 },\n      { \"stage\": \"rem\", \"start\": \"02:00\", \"end\": \"03:00\", \"duration\": 60 }\n    ],\n    \"noise_json\": { \"avg_db\": 28 },\n    \"created_at\": \"2026-06-30 02:00:00\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "获取睡眠分期数据",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sleep/report/stages?date=2026-06-29",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sleep", "report", "stages"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-06-29",
+                  "description": "日期 YYYY-MM-DD，默认为昨天",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "获取 48 个数据点的睡眠分期数据（5 分钟间隔，覆盖 22:30-06:30）。\n\n阶段编码：0=清醒  1=浅睡  2=深睡  3=REM"
+          },
+          "response": [
+            {
+              "name": "成功",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"code\": 0,\n  \"message\": \"success\",\n  \"data\": {\n    \"stages\": [\n      { \"time\": \"22:30\", \"stage\": 0 },\n      { \"time\": \"22:35\", \"stage\": 1 },\n      { \"time\": \"22:40\", \"stage\": 1 },\n      { \"time\": \"23:00\", \"stage\": 2 },\n      { \"time\": \"03:30\", \"stage\": 3 },\n      { \"time\": \"06:25\", \"stage\": 1 }\n    ],\n    \"count\": 48,\n    \"source\": \"generated\"\n  }\n}"
+            }
+          ]
+        }
+      ],
+      "description": "睡眠报告接口，全部需要 JWT Token。"
+    },
+    {
+      "name": "医生端",
+      "item": [
+        {
+          "name": "注册医生",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"13800001111\",\n  \"password\": \"123456\",\n  \"nickname\": \"测试医生\",\n  \"role\": \"doctor\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "医生注册，role 必须传 doctor。"
+          },
+          "response": []
+        },
+        {
+          "name": "医生登录",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.code === 0 && json.data && json.data.token) {",
+                  "        pm.environment.set('doctorToken', json.data.token);",
+                  "        console.log('Doctor Token 已保存');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"13800001111\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "医生登录，token 自动存入 doctorToken。"
+          },
+          "response": []
+        },
+        {
+          "name": "医生列表",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/doctors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "doctors"]
+            },
+            "description": "获取所有医生列表（id, phone, nickname）。"
+          },
+          "response": []
+        },
+        {
+          "name": "保存干预建议",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auth_id\": 1,\n  \"note\": \"建议保持规律作息，睡前避免使用手机。\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/doctor/note",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "doctor", "note"]
+            },
+            "description": "保存/更新干预建议。auth_id 为 doctor_authorizations 表的主键。"
+          },
+          "response": []
+        },
+        {
+          "name": "获取干预建议",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/doctor/note?auth_id=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "doctor", "note"],
+              "query": [
+                { "key": "auth_id", "value": "1" }
+              ]
+            },
+            "description": "获取指定授权记录的干预建议。"
+          },
+          "response": []
+        },
+        {
+          "name": "患者列表",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{doctorToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/doctor/patients",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "doctor", "patients"]
+            },
+            "description": "获取医生名下的患者列表，包含 doctor_note 字段。"
+          },
+          "response": []
+        }
+      ],
+      "description": "医生端接口（注册/登录/列表/干预建议）。"
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
