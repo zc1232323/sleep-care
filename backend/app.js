@@ -12,6 +12,7 @@ const { initDatabase } = require('./db/init');
 const authRoutes = require('./routes/auth');
 const deviceRoutes = require('./routes/devices');
 const reportRoutes = require('./routes/reports');
+const settingRoutes = require('./routes/settings');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,6 +37,7 @@ app.get('/', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/devices', deviceRoutes);
 app.use('/api/sleep/report', reportRoutes);  // 包含 /daily 和 /stages
+app.use('/api/setting', settingRoutes);     // 第8大节：作息设置
 
 // 启动服务
 initDatabase()

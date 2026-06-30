@@ -1,0 +1,78 @@
+<!--pages/settings/settings.wxml - 第8大节：作息设置页面-->
+<view class="settings-container">
+
+  <!-- 加载中 -->
+  <view class="loading-box" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 设置表单 -->
+  <view class="settings-form" wx:else>
+
+    <!-- 就寝时间 -->
+    <view class="setting-card">
+      <view class="card-icon">🌙</view>
+      <view class="card-body">
+        <text class="card-label">就寝时间</text>
+        <text class="card-desc">设置您的入睡时间</text>
+      </view>
+      <picker mode="time" value="{{bedTime}}" bindchange="onBedTimeChange">
+        <view class="picker-value">
+          <text class="time-text">{{bedTime}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 起床时间 -->
+    <view class="setting-card">
+      <view class="card-icon">☀️</view>
+      <view class="card-body">
+        <text class="card-label">起床时间</text>
+        <text class="card-desc">设置您的起床时间</text>
+      </view>
+      <picker mode="time" value="{{wakeTime}}" bindchange="onWakeTimeChange">
+        <view class="picker-value">
+          <text class="time-text">{{wakeTime}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 日出模拟时长 -->
+    <view class="setting-card slider-card">
+      <view class="card-icon">💡</view>
+      <view class="card-body">
+        <text class="card-label">日出模拟时长</text>
+        <text class="card-desc">模拟日出逐渐变亮的时间</text>
+      </view>
+      <view class="slider-section">
+        <view class="slider-value-box">
+          <text class="slider-value">{{sunriseDuration}}</text>
+          <text class="slider-unit">分钟</text>
+        </view>
+        <slider class="duration-slider"
+          min="5" max="30" step="1"
+          value="{{sunriseDuration}}"
+          bindchange="onSunriseChange"
+          activeColor="#1a73e8"
+          backgroundColor="#e8eaed"
+          block-size="22"
+          show-value="{{false}}" />
+        <view class="slider-range">
+          <text class="range-text">5</text>
+          <text class="range-text">30</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 保存按钮 -->
+    <button class="save-btn {{saving ? 'saving' : ''}}"
+            bindtap="saveSettings"
+            disabled="{{saving}}"
+            hover-class="save-btn-hover">
+      {{saving ? '保存中...' : '💾 保存设置'}}
+    </button>
+
+  </view>
+</view>

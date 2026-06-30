@@ -166,5 +166,12 @@ Page({
     wx.switchTab({
       url: '/pages/report/report'
     });
+  },
+
+  /** 跳转到作息设置页（第8大节，非 tabBar 页用 navigateTo） */
+  goToSettings() {
+    wx.navigateTo({
+      url: '/pages/settings/settings'
+    });
   }
 });

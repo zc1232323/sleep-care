@@ -58,6 +58,9 @@
       <button class="btn-detail" bindtap="goToReport" hover-class="btn-detail-hover">
         📊 查看详细分期
       </button>
+      <button class="btn-settings" bindtap="goToSettings" hover-class="btn-settings-hover">
+        ⚙️ 作息设置
+      </button>
     </view>
   </view>
 
