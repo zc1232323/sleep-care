@@ -20,7 +20,7 @@ Page({
   onLoad() {
     // 检查本地是否已有 token，有则直接跳转首页（免登录）
     if (app.getToken()) {
-      wx.redirectTo({ url: '/pages/home/home' });
+      wx.switchTab({ url: '/pages/home/home' });
     }
   },
 
