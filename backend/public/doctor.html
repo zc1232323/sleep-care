@@ -472,9 +472,12 @@
     myChart = echarts.init(chartDom);
 
     const stageData = [];
+    const stageMap = { awake: 0, light: 1, deep: 2, rem: 3 };
     if (Array.isArray(stages)) {
       stages.forEach((item, index) => {
-        stageData.push([index, item.stage]);
+        // 兼容字符串格式（如 "awake"）和数字格式
+        const val = stageMap[item.stage] !== undefined ? stageMap[item.stage] : item.stage;
+        stageData.push([index, val]);
       });
     }
 
