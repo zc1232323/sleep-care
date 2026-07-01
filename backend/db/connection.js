@@ -100,8 +100,6 @@ async function initMysql() {
     charset: 'utf8mb4',
     timezone: '+08:00',
     connectTimeout: 30000,
-    acquireTimeout: 60000,
-    timeout: 60000,
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000,
   });

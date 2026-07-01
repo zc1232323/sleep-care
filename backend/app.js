@@ -101,15 +101,19 @@ app.use((err, req, res, next) => {
   res.status(500).json({ code: 500, message: '服务器内部错误', data: null });
 });
 
-// 启动服务
+// 启动服务（先启动 HTTP，让 CloudBase 健康探针通过）
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[Server] SleepCare 后端服务已启动: http://localhost:${PORT}`);
+  console.log(`[Server] 局域网访问: http://172.30.157.136:${PORT}`);
+});
+
+// 数据库初始化在后台进行，不阻塞服务启动
+// 第13大节：MySQL 自动暂停时，initDatabase 会重试，但 HTTP 端口已监听，避免探针失败
 initDatabase()
   .then(() => {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`[Server] SleepCare 后端服务已启动: http://localhost:${PORT}`);
-      console.log(`[Server] 局域网访问: http://172.30.157.136:${PORT}`);
-    });
+    console.log('[Server] 数据库初始化完成');
   })
   .catch((err) => {
     console.error('[Server] 数据库初始化失败:', err);
-    process.exit(1);
+    // 不退出进程，让服务保持运行，后续请求会按需重试
   });
