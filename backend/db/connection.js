@@ -28,10 +28,18 @@ function createMysqlWrapper(pool) {
   return {
     async exec(sql, params = []) {
       const [rows] = await pool.query(sql, params);
+
+      // INSERT/UPDATE/DELETE 返回 ResultSetHeader，无数据行
       if (!Array.isArray(rows)) {
         return [];
       }
-      const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
+
+      // 无数据行时返回空数组（与 sql.js 行为一致）
+      if (rows.length === 0) {
+        return [];
+      }
+
+      const columns = Object.keys(rows[0]);
       const values = rows.map(row => columns.map(c => row[c]));
       return [{ columns, values }];
     },
