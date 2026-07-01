@@ -106,13 +106,28 @@ async function initMysql() {
     keepAliveInitialDelay: 10000,
   });
 
-  // 立即验证一次连接，失败则抛错让启动脚本感知
-  const testConn = await pool.getConnection();
-  try {
-    await testConn.query('SELECT 1 AS connection_test');
-    console.log('[DB] MySQL 连接测试通过');
-  } finally {
-    testConn.release();
+  // 第13大节：MySQL 自动暂停后冷启动很慢，需要重试机制
+  const MAX_RETRIES = 5;
+  const RETRY_DELAY_MS = 30000;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const testConn = await pool.getConnection();
+      try {
+        await testConn.query('SELECT 1 AS connection_test');
+        console.log(`[DB] MySQL 连接测试通过（尝试 ${attempt}/${MAX_RETRIES}）`);
+      } finally {
+        testConn.release();
+      }
+      break;
+    } catch (err) {
+      console.error(`[DB] MySQL 连接失败（尝试 ${attempt}/${MAX_RETRIES}）: ${err.code || err.message}`);
+      if (attempt === MAX_RETRIES) {
+        throw new Error(`MySQL 连接失败（已重试 ${MAX_RETRIES} 次）: ${err.message}`);
+      }
+      console.log(`[DB] ${RETRY_DELAY_MS / 1000}s 后重试...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+    }
   }
 
   db = createMysqlWrapper(pool);
