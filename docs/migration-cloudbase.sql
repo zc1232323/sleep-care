@@ -1,13 +1,14 @@
--- SQLite → MySQL 迁移脚本（第12大节）
--- 使用方法：
---   1. 在 MySQL 中创建数据库：CREATE DATABASE sleep_care CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
---   2. 执行本脚本：mysql -u root -p sleep_care < docs/migration.sql
---   3. 运行 docs/migrate-data.js 导入数据
+-- CloudBase SQL 型数据库专用建表脚本（第13大节）
+-- CloudBase SQL 编辑器一次只能执行一条语句，请按下面注释分隔逐条执行
+-- 执行顺序：创建数据库 → 使用数据库 → 5张表 → 5个索引
 
--- 设置字符集
-SET NAMES utf8mb4;
+-- 【第1条】创建数据库
+CREATE DATABASE IF NOT EXISTS sleep_care CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- 用户表
+-- 【第2条】切换到 sleep_care 数据库
+USE sleep_care;
+
+-- 【第3条】用户表
 CREATE TABLE IF NOT EXISTS users (
   id            INT PRIMARY KEY AUTO_INCREMENT,
   phone         VARCHAR(20)  NOT NULL UNIQUE,
@@ -19,7 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 设备表
+-- 【第4条】设备表
 CREATE TABLE IF NOT EXISTS devices (
   id             INT PRIMARY KEY AUTO_INCREMENT,
   serial_no      VARCHAR(64)  NOT NULL UNIQUE,
@@ -32,7 +33,7 @@ CREATE TABLE IF NOT EXISTS devices (
   FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 睡眠报告表
+-- 【第5条】睡眠报告表
 CREATE TABLE IF NOT EXISTS sleep_reports (
   id                   INT PRIMARY KEY AUTO_INCREMENT,
   user_id              INT          NOT NULL,
@@ -54,7 +55,7 @@ CREATE TABLE IF NOT EXISTS sleep_reports (
   UNIQUE KEY uk_user_device_date (user_id, device_id, report_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 用户设置表
+-- 【第6条】用户设置表
 CREATE TABLE IF NOT EXISTS user_settings (
   id                          INT PRIMARY KEY AUTO_INCREMENT,
   user_id                     INT          NOT NULL UNIQUE,
@@ -73,7 +74,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
   FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 医生授权表
+-- 【第7条】医生授权表
 CREATE TABLE IF NOT EXISTS doctor_authorizations (
   id            INT PRIMARY KEY AUTO_INCREMENT,
   patient_id    INT          NOT NULL,
@@ -89,9 +90,17 @@ CREATE TABLE IF NOT EXISTS doctor_authorizations (
   FOREIGN KEY (doctor_id)  REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 常用查询索引（性能优化）
-CREATE INDEX IF NOT EXISTS idx_sleep_reports_user_id      ON sleep_reports(user_id);
-CREATE INDEX IF NOT EXISTS idx_sleep_reports_report_date  ON sleep_reports(report_date);
-CREATE INDEX IF NOT EXISTS idx_devices_user_id            ON devices(user_id);
-CREATE INDEX IF NOT EXISTS idx_doctor_auth_doctor_id      ON doctor_authorizations(doctor_id);
-CREATE INDEX IF NOT EXISTS idx_doctor_auth_patient_id     ON doctor_authorizations(patient_id);
+-- 【第8条】索引1
+CREATE INDEX IF NOT EXISTS idx_sleep_reports_user_id ON sleep_reports(user_id);
+
+-- 【第9条】索引2
+CREATE INDEX IF NOT EXISTS idx_sleep_reports_report_date ON sleep_reports(report_date);
+
+-- 【第10条】索引3
+CREATE INDEX IF NOT EXISTS idx_devices_user_id ON devices(user_id);
+
+-- 【第11条】索引4
+CREATE INDEX IF NOT EXISTS idx_doctor_auth_doctor_id ON doctor_authorizations(doctor_id);
+
+-- 【第12条】索引5
+CREATE INDEX IF NOT EXISTS idx_doctor_auth_patient_id ON doctor_authorizations(patient_id);

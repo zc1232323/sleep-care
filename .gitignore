@@ -57,3 +57,10 @@ venv/
 .claude/
 .gpt/
 .workbuddy/
+
+# Deploy packages
+*-deploy.zip
+*-full.zip
+
+# PDF temp images
+_pdf*.png
