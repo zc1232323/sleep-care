@@ -36,11 +36,17 @@ app.get('/', (req, res) => {
   });
 });
 
+const dbInitState = { status: 'pending', error: null };
+
 // 数据库诊断端点（第13大节：CloudBase MySQL 调试）
 app.get('/api/health', async (req, res) => {
   try {
     const { getDb, DB_TYPE } = require('./db/connection');
-    const db = await getDb();
+    // 设置 5 秒超时，避免等待 MySQL 重试 150 秒
+    const db = await Promise.race([
+      getDb(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('数据库初始化超时')), 5000)),
+    ]);
 
     if (DB_TYPE === 'mysql') {
       try {
@@ -79,7 +85,7 @@ app.get('/api/health', async (req, res) => {
     res.json({
       code: 1001,
       message: '数据库连接失败',
-      data: { error: err.message },
+      data: { error: err.message, init_state: dbInitState },
     });
   }
 });
@@ -108,12 +114,13 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 // 数据库初始化在后台进行，不阻塞服务启动
-// 第13大节：MySQL 自动暂停时，initDatabase 会重试，但 HTTP 端口已监听，避免探针失败
 initDatabase()
   .then(() => {
+    dbInitState.status = 'ready';
     console.log('[Server] 数据库初始化完成');
   })
   .catch((err) => {
+    dbInitState.status = 'failed';
+    dbInitState.error = err.message;
     console.error('[Server] 数据库初始化失败:', err);
-    // 不退出进程，让服务保持运行，后续请求会按需重试
   });
