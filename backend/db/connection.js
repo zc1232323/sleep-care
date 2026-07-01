@@ -79,11 +79,11 @@ async function initSqlite() {
 async function initMysql() {
   const mysql = require('mysql2/promise');
 
-  const host = process.env.DB_HOST || 'localhost';
-  const port = parseInt(process.env.DB_PORT || '3306', 10);
-  const user = process.env.DB_USER || 'root';
-  const password = process.env.DB_PASSWORD || '';
-  const database = process.env.DB_NAME || 'sleep_care';
+  const host = process.env.DB_HOST || process.env.MYSQL_HOST || 'localhost';
+  const port = parseInt(process.env.DB_PORT || process.env.MYSQL_PORT || '3306', 10);
+  const user = process.env.DB_USER || process.env.MYSQL_USER || 'root';
+  const password = process.env.DB_PASSWORD || process.env.MYSQL_PASSWORD || '';
+  const database = process.env.DB_NAME || process.env.MYSQL_DATABASE || 'sleep_care';
 
   const pool = mysql.createPool({
     host,

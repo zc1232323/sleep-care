@@ -90,8 +90,9 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// 挂载路由
+// 挂载路由（第13大节：同时兼容 PDF 示例的 /api/auth 路径）
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/auth', authRoutes);  // 与 PDF 讲义路径保持一致
 app.use('/api/v1/devices', deviceRoutes);
 app.use('/api/sleep/report', reportRoutes);  // 包含 /daily 和 /stages
 app.use('/api/setting', settingRoutes);     // 第8大节：作息设置
