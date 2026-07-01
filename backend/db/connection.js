@@ -87,7 +87,25 @@ async function initMysql() {
     connectionLimit: 10,
     queueLimit: 0,
     multipleStatements: true,
+
+    // 第13大节：CloudBase 云托管 MySQL 连接优化
+    charset: 'utf8mb4',
+    timezone: '+08:00',
+    connectTimeout: 30000,
+    acquireTimeout: 60000,
+    timeout: 60000,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000,
   });
+
+  // 立即验证一次连接，失败则抛错让启动脚本感知
+  const testConn = await pool.getConnection();
+  try {
+    await testConn.query('SELECT 1 AS connection_test');
+    console.log('[DB] MySQL 连接测试通过');
+  } finally {
+    testConn.release();
+  }
 
   db = createMysqlWrapper(pool);
   console.log(`[DB] 已连接到 MySQL: ${host}:${port}/${database}`);
