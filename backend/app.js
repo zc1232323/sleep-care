@@ -36,6 +36,54 @@ app.get('/', (req, res) => {
   });
 });
 
+// 数据库诊断端点（第13大节：CloudBase MySQL 调试）
+app.get('/api/health', async (req, res) => {
+  try {
+    const { getDb, DB_TYPE } = require('./db/connection');
+    const db = await getDb();
+
+    if (DB_TYPE === 'mysql') {
+      try {
+        const [tables] = await db.$pool.query('SHOW TABLES');
+        const tableNames = tables.map(t => Object.values(t)[0]);
+        const [dbName] = await db.$pool.query('SELECT DATABASE() AS db');
+        res.json({
+          code: 0,
+          message: 'MySQL 连接正常',
+          data: {
+            db_type: 'mysql',
+            database: dbName[0]?.db || 'unknown',
+            tables: tableNames,
+            table_count: tableNames.length,
+          },
+        });
+      } catch (dbErr) {
+        res.json({
+          code: 1001,
+          message: 'MySQL 查询失败',
+          data: { error: dbErr.message, code: dbErr.code },
+        });
+      }
+    } else {
+      const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name");
+      res.json({
+        code: 0,
+        message: 'SQLite 连接正常',
+        data: {
+          db_type: 'sqlite',
+          tables: tables.length > 0 ? tables[0].values.flat() : [],
+        },
+      });
+    }
+  } catch (err) {
+    res.json({
+      code: 1001,
+      message: '数据库连接失败',
+      data: { error: err.message },
+    });
+  }
+});
+
 // 挂载路由
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/devices', deviceRoutes);

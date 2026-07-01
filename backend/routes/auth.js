@@ -116,7 +116,7 @@ router.post('/register', async (req, res) => {
     res.json({
       code: 1001,
       message: '注册失败',
-      data: null,
+      data: process.env.NODE_ENV === 'production' ? null : { error: err.message, code: err.code },
     });
   }
 });
@@ -214,7 +214,7 @@ router.post('/login', async (req, res) => {
     res.json({
       code: 1001,
       message: '登录失败',
-      data: null,
+      data: process.env.NODE_ENV === 'production' ? null : { error: err.message, code: err.code },
     });
   }
 });
