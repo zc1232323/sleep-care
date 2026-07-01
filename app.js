@@ -1,12 +1,14 @@
 /**
  * @file 小程序入口文件 —— 对齐讲义，提供 setToken/getToken 全局方法
  * @author 周灿
- * @date 2026-06-29
+ * @date 2026-07-01
  */
+
+const { BASE_URL } = require('./utils/config');
 
 App({
   globalData: {
-    baseUrl: 'http://localhost:3000',
+    baseUrl: BASE_URL,
     userInfo: null,
     token: null
   },
