@@ -215,7 +215,7 @@ summary-label { font-size: 22rpx; color: #888; }
   width: 14rpx; height: 14rpx; border-radius: 50%;
   border-width: 3rpx; border-style: solid;
   box-sizing: border-box;
-  position: absolute; bottom: 0;
+  position: absolute; bottom: 0; left: 50%;
   transform: translateX(-50%);
 }
 .dot-excellent { border-color: #51cf66; background: #d3f9d8; } /* 绿色 ≥85 */
@@ -227,7 +227,7 @@ summary-label { font-size: 22rpx; color: #888; }
 .t-bar {
   width: 70%; border-radius: 2rpx 2rpx 0 0;
   min-height: 4rpx; opacity: 0.35;
-  position: absolute; bottom: 0;
+  position: absolute; bottom: 0; left: 50%;
   transform: translateX(-50%);
 }
 .bar-excellent { background: #51cf66; }
