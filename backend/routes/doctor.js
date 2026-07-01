@@ -1,5 +1,5 @@
 /**
- * @file 医生授权路由（第9+10大节）
+ * @file 医生授权路由（第9+11大节）
  * @author 周灿
  * @date 2026-06-30
  *
@@ -8,7 +8,7 @@
  *   GET  /api/doctor/granted    — 查看已授权的医生列表
  *   DELETE /api/doctor/revoke   — 撤销授权
  *
- * 医生端（第10大节新增）：
+ * 医生端（第11大节新增）：
  *   PUT /api/doctor/confirm     — 确认授权（pending → active）
  *   GET /api/doctor/patients    — 患者列表（含状态、最新评分）
  *   GET /api/doctor/patient/data — 查看患者报告（仅 active 可查看）
@@ -206,7 +206,7 @@ router.delete('/revoke', async (req, res) => {
 });
 
 // ============================================================
-// 第10大节：医生端 API
+// 第11大节：医生端 API
 // ============================================================
 
 /**

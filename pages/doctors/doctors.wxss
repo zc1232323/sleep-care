@@ -1,4 +1,4 @@
-/* pages/doctors/doctors.wxss - 第10大节：医生授权管理页样式（卡片列表选择） */
+/* pages/doctors/doctors.wxss - 第11大节：医生授权管理页样式（卡片列表选择） */
 
 .doctor-container {
   min-height: 100vh;

@@ -31,15 +31,18 @@ Page({
 
   /**
    * 加载每日睡眠报告
+   * @param {boolean} skipLoading 为 true 时不重复设置 loading（如下拉刷新已提前设置）
    */
-  loadDailyReport() {
+  loadDailyReport(skipLoading = false) {
     const token = app.getToken();
     if (!token) {
       this.setData({ hasToken: false });
       return;
     }
 
-    this.setData({ loading: true });
+    if (!skipLoading) {
+      this.setData({ loading: true });
+    }
 
     wx.request({
       url: `${app.globalData.baseUrl}/api/sleep/report/daily`,
@@ -74,7 +77,6 @@ Page({
               ...data,
               total_duration: totalDuration,
               deep_ratio: deepRatio,
-              // 预计算详细时长（WXML不能直接调用JS函数）
               deep_duration: this.formatMin(data.deep_sleep_minutes || 0),
               light_duration: this.formatMin(data.light_sleep_minutes || 0),
               awake_duration: this.formatMin(data.awake_minutes || 0),
@@ -126,11 +128,9 @@ Page({
    * 下拉刷新
    */
   onPullDownRefresh() {
-    this.setData({ refreshing: true });
-    // 延迟一点让动画显示出来
-    setTimeout(() => {
-      this.loadDailyReport();
-    }, 300);
+    // 合并 loading + refreshing 为一次 setData，避免与 loadDailyReport 重复设置
+    this.setData({ loading: true, refreshing: true });
+    this.loadDailyReport(true);
   },
 
   /**

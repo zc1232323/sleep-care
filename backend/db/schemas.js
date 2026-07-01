@@ -117,6 +117,15 @@ const CREATE_DOCTOR_AUTHORIZATIONS_TABLE = `
   );
 `;
 
+/** 常用查询索引（第12大节：性能优化） */
+const CREATE_INDEXES = `
+  CREATE INDEX IF NOT EXISTS idx_sleep_reports_user_id      ON sleep_reports(user_id);
+  CREATE INDEX IF NOT EXISTS idx_sleep_reports_report_date  ON sleep_reports(report_date);
+  CREATE INDEX IF NOT EXISTS idx_devices_user_id            ON devices(user_id);
+  CREATE INDEX IF NOT EXISTS idx_doctor_auth_doctor_id      ON doctor_authorizations(doctor_id);
+  CREATE INDEX IF NOT EXISTS idx_doctor_auth_patient_id     ON doctor_authorizations(patient_id);
+`;
+
 /** 所有建表语句列表（按依赖顺序） */
 const ALL_SCHEMAS = [
   CREATE_USERS_TABLE,
@@ -124,6 +133,7 @@ const ALL_SCHEMAS = [
   CREATE_SLEEP_REPORTS_TABLE,
   CREATE_USER_SETTINGS_TABLE,
   CREATE_DOCTOR_AUTHORIZATIONS_TABLE,
+  CREATE_INDEXES,
 ];
 
 module.exports = {

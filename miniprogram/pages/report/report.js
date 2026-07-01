@@ -83,7 +83,7 @@ Page({
       header: { Authorization: `Bearer ${token}` },
       timeout: 15000,
       success: (res) => this.handleStagesRes(res),
-      fail: () => {}
+      fail: () => { this.setData({ loading: false }); wx.stopPullDownRefresh(); }
     });
 
     wx.request({
@@ -92,7 +92,7 @@ Page({
       header: { Authorization: `Bearer ${token}` },
       timeout: 15000,
       success: (res) => this.handleNoiseRes(res),
-      fail: () => {}
+      fail: () => { this.setData({ loading: false }); wx.stopPullDownRefresh(); }
     });
 
     // 第7大节：评分汇总
@@ -112,14 +112,15 @@ Page({
         if (res.statusCode === 200 && res.data.code === 0) {
           const d = res.data.data;
           const chartData = this.buildTrendChart(d.labels, d.scores, d.avg_score);
-          this.setData({ summaryData: chartData });
+          this.setData({ summaryData: chartData, loading: false });
+          wx.stopPullDownRefresh();
         } else if (res.statusCode === 401 || res.statusCode === 403) {
           app.clearToken();
-          this.setData({ error: '登录已过期' });
+          this.setData({ error: '登录已过期', loading: false });
+          wx.stopPullDownRefresh();
         }
-        this.checkLoadComplete();
       },
-      fail: () => { this.checkLoadComplete(); }
+      fail: () => { this.setData({ loading: false }); wx.stopPullDownRefresh(); }
     });
   },
 
@@ -168,13 +169,20 @@ Page({
       for (let i = 0; i < stages.length; i += 8) {
         xLabels.push(String(stages[i].time).slice(0, 5));
       }
-      this.setData({ stagesData: enriched, xLabels, stageSource: res.data.data.source || 'db' });
-      this.calcSummary(stages);
+      const summary = this.calcSummary(stages);
+      this.setData({
+        stagesData: enriched,
+        xLabels,
+        stageSource: res.data.data.source || 'db',
+        summary,
+        loading: false
+      });
+      wx.stopPullDownRefresh();
     } else if (res.statusCode === 401 || res.statusCode === 403) {
       app.clearToken();
-      this.setData({ error: '登录已过期' });
+      this.setData({ error: '登录已过期', loading: false });
+      wx.stopPullDownRefresh();
     }
-    this.checkLoadComplete();
   },
 
   /** 处理噪音接口响应 */
@@ -199,9 +207,14 @@ Page({
       for (let i = 0; i < noises.length; i += 24) {
         nxLabels.push(String(noises[i].time).slice(0, 5));
       }
-      this.setData({ noiseData: enriched, noiseXLabels: nxLabels, noiseSource: res.data.data.source || 'db' });
+      this.setData({
+        noiseData: enriched,
+        noiseXLabels: nxLabels,
+        noiseSource: res.data.data.source || 'db',
+        loading: false
+      });
+      wx.stopPullDownRefresh();
     }
-    this.checkLoadComplete();
   },
 
   /** 切换日/周/月视图 */
@@ -212,20 +225,12 @@ Page({
     this.loadSummary(); // 重新加载该周期的数据
   },
 
-  /** 检查请求是否完成 */
-  checkLoadComplete() {
-    if (this.data.stagesData || this.data.noiseData || this.data.summaryData) {
-      this.setData({ loading: false });
-      wx.stopPullDownRefresh();
-    }
-  },
-
   calcSummary(stages) {
     let awake = 0, light = 0, deep = 0, rem = 0;
     for (const s of stages) {
       switch (s.stage) { case 0: awake++; break; case 1: light++; break; case 2: deep++; break; case 3: rem++; break; }
     }
-    this.setData({ summary: { awake, light, deep, rem } });
+    return { awake, light, deep, rem };
   },
 
   onDateChange(e) {

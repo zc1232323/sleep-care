@@ -1,0 +1,400 @@
+openapi: 3.0.0
+info:
+  title: SleepCare 智能睡眠健康管理 API
+  description: 智能睡眠环境调控设备软件系统后端接口文档
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: 本地开发环境
+
+paths:
+  /api/v1/auth/register:
+    post:
+      summary: 用户注册
+      tags:
+        - 认证
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone: { type: string, example: "13800138000" }
+                password: { type: string, example: "123456" }
+                nickname: { type: string, example: "测试用户" }
+                role: { type: string, enum: [patient, doctor], default: patient }
+      responses:
+        '200':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/v1/auth/login:
+    post:
+      summary: 用户登录
+      tags:
+        - 认证
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone: { type: string, example: "13800138000" }
+                password: { type: string, example: "123456" }
+      responses:
+        '200':
+          description: 登录成功，返回 JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/users/doctors:
+    get:
+      summary: 获取医生列表
+      tags:
+        - 用户
+      responses:
+        '200':
+          description: 医生列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/v1/devices/add:
+    post:
+      summary: 添加设备
+      tags:
+        - 设备
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                device_serial: { type: string, example: "aB3xY9kLm2NpQ7Wx" }
+                is_virtual: { type: boolean, example: true }
+      responses:
+        '200':
+          description: 添加成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/v1/devices/list:
+    get:
+      summary: 获取设备列表
+      tags:
+        - 设备
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 设备列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/sleep/report/daily:
+    get:
+      summary: 获取每日睡眠报告
+      tags:
+        - 睡眠报告
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          schema: { type: string, example: "2026-06-29" }
+      responses:
+        '200':
+          description: 每日报告
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/sleep/report/stages:
+    get:
+      summary: 获取睡眠分期数据
+      tags:
+        - 睡眠报告
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          schema: { type: string, example: "2026-06-29" }
+      responses:
+        '200':
+          description: 分期数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/sleep/report/noise:
+    get:
+      summary: 获取噪音数据
+      tags:
+        - 睡眠报告
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          schema: { type: string, example: "2026-06-29" }
+      responses:
+        '200':
+          description: 噪音数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/sleep/report/summary:
+    get:
+      summary: 获取睡眠评分趋势
+      tags:
+        - 睡眠报告
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema: { type: string, enum: [week, month], example: "week" }
+      responses:
+        '200':
+          description: 趋势数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/setting/plan:
+    get:
+      summary: 获取作息设置
+      tags:
+        - 设置
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 作息设置
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    put:
+      summary: 更新作息设置
+      tags:
+        - 设置
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bed_time: { type: string, example: "23:00" }
+                wake_time: { type: string, example: "07:00" }
+                sunrise_duration_minutes: { type: integer, example: 10 }
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/doctor/grant:
+    post:
+      summary: 患者授权医生
+      tags:
+        - 医生授权
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                doctor_id: { type: integer, example: 1 }
+                doctor_phone: { type: string, example: "13811111111" }
+      responses:
+        '200':
+          description: 授权请求已发送
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/doctor/revoke:
+    delete:
+      summary: 撤销医生授权
+      tags:
+        - 医生授权
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: auth_id
+          in: query
+          required: true
+          schema: { type: integer, example: 1 }
+      responses:
+        '200':
+          description: 撤销成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/doctor/granted:
+    get:
+      summary: 已授权医生列表
+      tags:
+        - 医生授权
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 已授权列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/doctor/confirm:
+    put:
+      summary: 医生确认授权
+      tags:
+        - 医生授权
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                auth_id: { type: integer, example: 1 }
+      responses:
+        '200':
+          description: 确认成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/doctor/patients:
+    get:
+      summary: 医生患者列表
+      tags:
+        - 医生授权
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 患者列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/doctor/patient/data:
+    get:
+      summary: 医生查看患者报告
+      tags:
+        - 医生授权
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: patient_id
+          in: query
+          required: true
+          schema: { type: integer, example: 2 }
+      responses:
+        '200':
+          description: 患者报告
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/doctor/note:
+    put:
+      summary: 保存干预建议
+      tags:
+        - 医生授权
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                patient_id: { type: integer, example: 2 }
+                note: { type: string, example: "建议保持规律作息" }
+      responses:
+        '200':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    get:
+      summary: 获取干预建议
+      tags:
+        - 医生授权
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: patient_id
+          in: query
+          required: true
+          schema: { type: integer, example: 2 }
+      responses:
+        '200':
+          description: 建议内容
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          nullable: true

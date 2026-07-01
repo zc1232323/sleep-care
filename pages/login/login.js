@@ -115,7 +115,7 @@ Page({
       url: `${app.globalData.baseUrl}/api/v1/auth/register`,
       method: 'POST',
       header: { 'Content-Type': 'application/json' },
-      data: { phone, password, nickname: nickname || undefined, role: 'patient' },  // 第10大节：显式注册为patient角色
+      data: { phone, password, nickname: nickname || undefined, role: 'patient' },  // 第11大节：显式注册为patient角色
       success: (res) => {
         if (res.data.code === 0) {
           // 注册成功 → 自动登录

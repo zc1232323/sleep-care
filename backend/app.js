@@ -41,11 +41,17 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/devices', deviceRoutes);
 app.use('/api/sleep/report', reportRoutes);  // 包含 /daily 和 /stages
 app.use('/api/setting', settingRoutes);     // 第8大节：作息设置
-app.use('/api/doctor', doctorRoutes);      // 第9+10大节：医生授权管理
-app.use('/api/users', userRoutes);         // 第10大节：用户列表
+app.use('/api/doctor', doctorRoutes);      // 第9+11大节：医生授权管理
+app.use('/api/users', userRoutes);         // 第11大节：用户列表
 
-// 第10大节：Express 静态文件服务（医生端 Web 页面）
+// 第11大节：Express 静态文件服务（医生端 Web 页面）
 app.use(express.static(path.join(__dirname, 'public')));
+
+// 统一错误处理中间件（第12大节：性能优化/错误处理）
+app.use((err, req, res, next) => {
+  console.error('[Error]', err.stack);
+  res.status(500).json({ code: 500, message: '服务器内部错误', data: null });
+});
 
 // 启动服务
 initDatabase()

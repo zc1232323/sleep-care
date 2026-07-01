@@ -1,5 +1,5 @@
 /**
- * @file 医生授权管理页（第9+10大节）
+ * @file 医生授权管理页（第9+11大节）
  * @author 周灿
  * @date 2026-06-30
  *
@@ -27,7 +27,7 @@ Page({
     this.loadGrantedDoctors();
   },
 
-  /** 加载所有医生（第10大节：loadDoctors） */
+  /** 加载所有医生（第11大节：loadDoctors） */
   loadAllDoctors() {
     const token = app.getToken();
     if (!token) return;
@@ -63,7 +63,7 @@ Page({
   /** 加载已授权的医生列表 */
   loadGrantedDoctors() {
     const token = app.getToken();
-    if (!token) { this.setData({ error: '请先登录' }); return; }
+    if (!token) { this.setData({ error: '请先登录', loading: false }); return; }
 
     this.setData({ loading: true });
 
@@ -74,16 +74,16 @@ Page({
       timeout: 10000,
       success: (res) => {
         if (res.statusCode === 200 && res.data.code === 0) {
-          this.setData({ grantedDoctors: res.data.data || [] });
+          this.setData({ grantedDoctors: res.data.data || [], loading: false });
         } else if (res.statusCode === 401) {
           app.clearToken();
-          this.setData({ error: '登录已过期' });
+          this.setData({ error: '登录已过期', loading: false });
+        } else {
+          this.setData({ loading: false });
         }
       },
       fail: () => {
         wx.showToast({ title: '网络连接失败', icon: 'none' });
-      },
-      complete: () => {
         this.setData({ loading: false });
       }
     });
@@ -113,7 +113,7 @@ Page({
       success: (res) => {
         if (res.statusCode === 200 && res.data.code === 0) {
           wx.showToast({ title: '授权成功', icon: 'success' });
-          this.setData({ selectedDoctorId: null, selectedDoctorName: '', adding: false });
+          this.setData({ selectedDoctorId: null, selectedDoctorName: '' });
           this.loadGrantedDoctors();
         } else if (res.statusCode === 200 && res.data.code === 1002) {
           wx.showToast({ title: '未找到该医生账号', icon: 'none', duration: 2500 });
