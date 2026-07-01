@@ -29,7 +29,7 @@ router.get('/plan', async (req, res) => {
   const userId = req.user.id;
   try {
     const db = await getDb();
-    const row = db.exec(
+    const row = await db.exec(
       `SELECT bed_time, wake_time, sunrise_duration_minutes FROM user_settings WHERE user_id = ?`,
       [userId]
     );
@@ -86,20 +86,20 @@ router.put('/plan', async (req, res) => {
     const db = await getDb();
 
     // UPSERT: 先查是否存在
-    const existing = db.exec(
+    const existing = await db.exec(
       `SELECT id FROM user_settings WHERE user_id = ?`,
       [userId]
     );
 
     if (existing.length > 0 && existing[0].values.length > 0) {
       // 更新
-      db.run(
+      await db.run(
         `UPDATE user_settings SET bed_time = ?, wake_time = ?, sunrise_duration_minutes = ?, updated_at = datetime('now','localtime') WHERE user_id = ?`,
         [bed_time, wake_time, duration, userId]
       );
     } else {
       // 插入
-      db.run(
+      await db.run(
         `INSERT INTO user_settings (user_id, bed_time, wake_time, sunrise_duration_minutes) VALUES (?, ?, ?, ?)`,
         [userId, bed_time, wake_time, duration]
       );

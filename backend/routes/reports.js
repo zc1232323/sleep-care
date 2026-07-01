@@ -127,7 +127,7 @@ router.get('/daily', async (req, res) => {
 
     // 2. 获取用户的第一台设备（简化处理：取最早添加的一台）
     let deviceId = 0;
-    const deviceRow = db.exec(
+    const deviceRow = await db.exec(
       'SELECT id FROM devices WHERE user_id = ? ORDER BY created_at ASC LIMIT 1',
       [userId]
     );
@@ -136,7 +136,7 @@ router.get('/daily', async (req, res) => {
     }
 
     // 3. 先查询数据库：是否已有该日期的报告
-    const existing = db.exec(
+    const existing = await db.exec(
       `SELECT id, user_id, device_id, report_date, sleep_score,
               total_sleep_minutes, deep_sleep_minutes, light_sleep_minutes,
               rem_sleep_minutes, awake_minutes, awake_count,
@@ -177,7 +177,7 @@ router.get('/daily', async (req, res) => {
 
     // 6. INSERT 插入数据库
     try {
-      db.run(
+      await db.run(
         `INSERT INTO sleep_reports
            (user_id, device_id, report_date, sleep_score, total_sleep_minutes,
             deep_sleep_minutes, light_sleep_minutes, rem_sleep_minutes,
@@ -194,7 +194,7 @@ router.get('/daily', async (req, res) => {
     } catch (err) {
       // 并发场景下可能 UNIQUE 约束冲突，重新查询返回即可
       if (err.message && err.message.includes('UNIQUE constraint failed')) {
-        const retry = db.exec(
+        const retry = await db.exec(
           `SELECT id, user_id, device_id, report_date, sleep_score,
                   total_sleep_minutes, deep_sleep_minutes, light_sleep_minutes,
                   rem_sleep_minutes, awake_minutes, awake_count,
@@ -228,7 +228,7 @@ router.get('/daily', async (req, res) => {
     saveDb();
 
     // 8. 查询新插入的记录并返回
-    const inserted = db.exec(
+    const inserted = await db.exec(
       `SELECT id, user_id, device_id, report_date, sleep_score,
               total_sleep_minutes, deep_sleep_minutes, light_sleep_minutes,
               rem_sleep_minutes, awake_minutes, awake_count,
@@ -308,7 +308,7 @@ router.get('/stages', async (req, res) => {
 
     // 2. 获取设备 ID
     let deviceId = 0;
-    const deviceRow = db.exec(
+    const deviceRow = await db.exec(
       'SELECT id FROM devices WHERE user_id = ? ORDER BY created_at ASC LIMIT 1',
       [userId]
     );
@@ -318,7 +318,7 @@ router.get('/stages', async (req, res) => {
 
     // 3. 查询是否已有该日期的报告记录
     let existingReportId = null;
-    const existing = db.exec(
+    const existing = await db.exec(
       'SELECT id, sleep_stages_json FROM sleep_reports WHERE user_id = ? AND device_id = ? AND report_date = ?',
       [userId, deviceId, dateStr]
     );
@@ -338,7 +338,7 @@ router.get('/stages', async (req, res) => {
               typeof parsedStages[0].stage === 'string') {
             // 旧格式 → 转换为 48 点格式并更新
             const stages48 = generate48StagePoints(userId, deviceId, dateStr);
-            db.run(
+            await db.run(
               'UPDATE sleep_reports SET sleep_stages_json = ? WHERE id = ?',
               [JSON.stringify(stages48), row[0]]
             );
@@ -369,7 +369,7 @@ router.get('/stages', async (req, res) => {
     // 6. 写入数据库（关键：UPDATE 匹配 0 行不报错，必须分情况处理）
     if (existingReportId) {
       // 已有报告行 → UPDATE sleep_stages_json
-      db.run(
+      await db.run(
         'UPDATE sleep_reports SET sleep_stages_json = ? WHERE id = ?',
         [JSON.stringify(stages48), existingReportId]
       );
@@ -378,7 +378,7 @@ router.get('/stages', async (req, res) => {
       const baseData = generateReportData(userId, deviceId, dateStr);
       baseData.sleep_stages_json = JSON.stringify(stages48);
 
-      db.run(
+      await db.run(
         `INSERT INTO sleep_reports
            (user_id, device_id, report_date, sleep_score, total_sleep_minutes,
             deep_sleep_minutes, light_sleep_minutes, rem_sleep_minutes,
@@ -509,7 +509,7 @@ router.get('/noise', async (req, res) => {
 
     // 2. 获取设备 ID
     let deviceId = 0;
-    const deviceRow = db.exec(
+    const deviceRow = await db.exec(
       'SELECT id FROM devices WHERE user_id = ? ORDER BY created_at ASC LIMIT 1',
       [userId]
     );
@@ -519,7 +519,7 @@ router.get('/noise', async (req, res) => {
 
     // 3. 查询是否已有该日期的报告记录
     let existingReportId = null;
-    const existing = db.exec(
+    const existing = await db.exec(
       'SELECT id, noise_json FROM sleep_reports WHERE user_id = ? AND device_id = ? AND report_date = ?',
       [userId, deviceId, dateStr]
     );
@@ -556,13 +556,13 @@ router.get('/noise', async (req, res) => {
     const noiseJsonStr = JSON.stringify(noises144);
 
     if (existingReportId) {
-      db.run('UPDATE sleep_reports SET noise_json = ? WHERE id = ?', [noiseJsonStr, existingReportId]);
+      await db.run('UPDATE sleep_reports SET noise_json = ? WHERE id = ?', [noiseJsonStr, existingReportId]);
     } else {
       // 无报告行 → INSERT
       const baseData = generateReportData(userId, deviceId, dateStr);
       baseData.noise_json = noiseJsonStr;
 
-      db.run(
+      await db.run(
         `INSERT INTO sleep_reports
            (user_id, device_id, report_date, sleep_score, total_sleep_minutes,
             deep_sleep_minutes, light_sleep_minutes, rem_sleep_minutes,
@@ -686,7 +686,7 @@ router.get('/summary', async (req, res) => {
 
     // 获取设备 ID
     let deviceId = 0;
-    const deviceRow = db.exec(
+    const deviceRow = await db.exec(
       'SELECT id FROM devices WHERE user_id = ? ORDER BY created_at ASC LIMIT 1',
       [userId]
     );
@@ -742,7 +742,7 @@ router.get('/summary', async (req, res) => {
     if (period === 'day') {
       // 日视图：逐日查询
       for (const ds of dateRange) {
-        const row = db.exec(
+        const row = await db.exec(
           `SELECT sleep_score FROM sleep_reports WHERE user_id = ? AND device_id = ? AND report_date = ?`,
           [userId, deviceId, ds]
         );
@@ -763,7 +763,7 @@ router.get('/summary', async (req, res) => {
     } else if (period === 'week') {
       // 周视图：查询每周的评分，取均值或最近一天
       for (const range of dateRange) {
-        const row = db.exec(
+        const row = await db.exec(
           `SELECT AVG(sleep_score) as avg_sc FROM sleep_reports 
            WHERE user_id = ? AND device_id = ? 
              AND report_date >= ? AND report_date <= ?`,
@@ -788,7 +788,7 @@ router.get('/summary', async (req, res) => {
       // 月视图：查询每月的评分
       for (const range of dateRange) {
         const monthPrefix = range.start.slice(0, 7); // "2026-06"
-        const row = db.exec(
+        const row = await db.exec(
           `SELECT AVG(sleep_score) as avg_sc FROM sleep_reports 
            WHERE user_id = ? AND device_id = ? 
              AND report_date LIKE ?`,
@@ -854,7 +854,7 @@ async function generateRandomScore(dateStr, userId, deviceId, db) {
     // 直接使用传入的 db 参数（已由调用方 getDb() 初始化）
     
     // 先检查是否已存在
-    const existing = db.exec(
+    const existing = await db.exec(
       'SELECT id FROM sleep_reports WHERE user_id = ? AND device_id = ? AND report_date = ?',
       [userId, deviceId, dateStr]
     );
@@ -863,7 +863,7 @@ async function generateRandomScore(dateStr, userId, deviceId, db) {
 
     if (existing.length > 0 && existing[0].values.length > 0) {
       // 已有记录但可能缺 sleep_score → UPDATE
-      db.run(
+      await db.run(
         'UPDATE sleep_reports SET sleep_score = ?, total_sleep_minutes = ?, deep_sleep_minutes = ?, light_sleep_minutes = ?, rem_sleep_minutes = ?, awake_minutes = ?, awake_count = ?, heart_rate_json = ?, noise_json = ? WHERE id = ?',
         [score, baseData.total_sleep_minutes, baseData.deep_sleep_minutes, baseData.light_sleep_minutes,
          baseData.rem_sleep_minutes, baseData.awake_minutes, baseData.awake_count,
@@ -871,7 +871,7 @@ async function generateRandomScore(dateStr, userId, deviceId, db) {
       );
     } else {
       // 无记录 → INSERT
-      db.run(
+      await db.run(
         `INSERT INTO sleep_reports (user_id, device_id, report_date, sleep_score, total_sleep_minutes,
          deep_sleep_minutes, light_sleep_minutes, rem_sleep_minutes, awake_minutes, awake_count, heart_rate_json, noise_json)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,

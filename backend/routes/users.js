@@ -16,7 +16,7 @@ const router = express.Router();
 router.get('/doctors', async (req, res) => {
   try {
     const db = await getDb();
-    const rows = db.exec("SELECT id, phone, nickname FROM users WHERE role = 'doctor' ORDER BY id");
+    const rows = await db.exec("SELECT id, phone, nickname FROM users WHERE role = 'doctor' ORDER BY id");
 
     if (rows.length > 0 && rows[0].values.length > 0) {
       const doctors = rows[0].values.map(row => ({

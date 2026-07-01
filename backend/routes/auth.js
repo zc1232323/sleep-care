@@ -61,7 +61,7 @@ router.post('/register', async (req, res) => {
     const db = await getDb();
 
     // 4. 检查手机号是否已注册
-    const existing = db.exec('SELECT 1 FROM users WHERE phone = ?', [phone]);
+    const existing = await db.exec('SELECT 1 FROM users WHERE phone = ?', [phone]);
     if (existing.length > 0 && existing[0].values.length > 0) {
       return res.json({
         code: 1001,
@@ -79,7 +79,7 @@ router.post('/register', async (req, res) => {
 
     // 7. 插入新用户：role 默认 patient（第11大节支持传入 doctor），status 默认 1
     try {
-      db.run(
+      await db.run(
         `INSERT INTO users (phone, password_hash, nickname, role, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, 1, ?, ?)`,
         [phone, passwordHash, displayName, role, now, now]
@@ -95,7 +95,7 @@ router.post('/register', async (req, res) => {
     saveDb();
 
     // 9. 查询新用户（不含密码哈希）
-    const result = db.exec(
+    const result = await db.exec(
       'SELECT id, phone, nickname, role FROM users WHERE phone = ?',
       [phone]
     );
@@ -144,7 +144,7 @@ router.post('/login', async (req, res) => {
     const db = await getDb();
 
     // 2. 按 phone 查询用户
-    const result = db.exec(
+    const result = await db.exec(
       'SELECT id, phone, password_hash, nickname, role, status FROM users WHERE phone = ?',
       [phone]
     );
@@ -194,7 +194,7 @@ router.post('/login', async (req, res) => {
 
     // 6. 更新 updated_at（记录最后登录时间）
     const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
-    db.run('UPDATE users SET updated_at = ? WHERE id = ?', [now, user.id]);
+    await db.run('UPDATE users SET updated_at = ? WHERE id = ?', [now, user.id]);
     saveDb();
 
     // 7. 返回 token 和用户信息

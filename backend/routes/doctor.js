@@ -26,8 +26,8 @@ router.use(authenticateToken);
 /**
  * 通用：根据患者最近一次睡眠报告，获取最新评分
  */
-function getLatestScore(db, patientId) {
-  const scoreRes = db.exec(
+async function getLatestScore(db, patientId) {
+  const scoreRes = await db.exec(
     `SELECT sleep_score FROM sleep_reports WHERE user_id = ? ORDER BY report_date DESC LIMIT 1`,
     [patientId]
   );
@@ -58,15 +58,15 @@ router.post('/grant', async (req, res) => {
     // 1. 查找医生用户
     let docRow = null;
     if (doctorId) {
-      const r = db.exec("SELECT id, phone, nickname FROM users WHERE id = ? AND role = 'doctor'", [doctorId]);
+      const r = await db.exec("SELECT id, phone, nickname FROM users WHERE id = ? AND role = 'doctor'", [doctorId]);
       if (r.length > 0 && r[0].values.length > 0) docRow = r;
     }
     if (!docRow && doctorPhone) {
-      const r = db.exec("SELECT id, phone, nickname FROM users WHERE phone = ? AND role = 'doctor'", [doctorPhone]);
+      const r = await db.exec("SELECT id, phone, nickname FROM users WHERE phone = ? AND role = 'doctor'", [doctorPhone]);
       if (r.length > 0 && r[0].values.length > 0) docRow = r;
     }
     if (!docRow && phone) {
-      const r = db.exec("SELECT id, phone, nickname FROM users WHERE phone = ? AND role = 'doctor'", [phone]);
+      const r = await db.exec("SELECT id, phone, nickname FROM users WHERE phone = ? AND role = 'doctor'", [phone]);
       if (r.length > 0 && r[0].values.length > 0) docRow = r;
     }
 
@@ -77,7 +77,7 @@ router.post('/grant', async (req, res) => {
     const [docId, docPhone, docName] = docRow[0].values[0];
 
     // 2. 检查是否已授权该医生
-    const existing = db.exec(
+    const existing = await db.exec(
       `SELECT id, status FROM doctor_authorizations 
        WHERE patient_id = ? AND doctor_id = ? AND status IN ('pending','active')`,
       [userId, docId]
@@ -98,14 +98,14 @@ router.post('/grant', async (req, res) => {
     }
 
     // 4. 插入授权记录
-    db.run(
+    await db.run(
       `INSERT INTO doctor_authorizations 
          (patient_id, doctor_id, status, expire_date, requested_at)
        VALUES (?, ?, 'pending', ?, datetime('now','localtime'))`,
       [userId, docId, expireDateStr]
     );
 
-    const lastIdRes = db.exec('SELECT last_insert_rowid()');
+    const lastIdRes = await db.exec('SELECT last_insert_rowid()');
     const newId = lastIdRes[0]?.values[0][0] || 0;
 
     saveDb();
@@ -138,7 +138,7 @@ router.get('/granted', async (req, res) => {
   try {
     const db = await getDb();
 
-    const rows = db.exec(`
+    const rows = await db.exec(`
       SELECT a.id, a.doctor_id, a.status, a.expire_date, a.requested_at,
              u.nickname as doctor_name, u.phone as doctor_phone
       FROM doctor_authorizations a
@@ -182,7 +182,7 @@ router.delete('/revoke', async (req, res) => {
   try {
     const db = await getDb();
 
-    const check = db.exec(
+    const check = await db.exec(
       `SELECT id FROM doctor_authorizations WHERE id = ? AND patient_id = ? AND status IN ('pending','active')`,
       [authId, userId]
     );
@@ -191,7 +191,7 @@ router.delete('/revoke', async (req, res) => {
       return res.json({ code: 1002, message: '授权记录不存在或已被撤销', data: null });
     }
 
-    db.run(
+    await db.run(
       `UPDATE doctor_authorizations SET status = 'revoked', responded_at = datetime('now','localtime') WHERE id = ?`,
       [authId]
     );
@@ -235,7 +235,7 @@ router.put('/confirm', async (req, res) => {
       params.push(patient_id);
     }
 
-    const check = db.exec(
+    const check = await db.exec(
       `SELECT id, patient_id FROM doctor_authorizations WHERE doctor_id = ? AND status = 'pending' ${whereClause}`,
       params
     );
@@ -247,7 +247,7 @@ router.put('/confirm', async (req, res) => {
     const authRecordId = check[0].values[0][0];
     const targetPatientId = check[0].values[0][1];
 
-    db.run(
+    await db.run(
       `UPDATE doctor_authorizations SET status = 'active', responded_at = datetime('now','localtime') WHERE id = ?`,
       [authRecordId]
     );
@@ -275,7 +275,7 @@ router.get('/patients', async (req, res) => {
   try {
     const db = await getDb();
 
-    const rows = db.exec(`
+    const rows = await db.exec(`
       SELECT a.id, a.patient_id, a.status, a.expire_date, a.requested_at, a.responded_at, a.doctor_note,
              u.nickname as patient_name, u.phone as patient_phone
       FROM doctor_authorizations a
@@ -285,9 +285,10 @@ router.get('/patients', async (req, res) => {
     `, [doctorId]);
 
     if (rows.length > 0 && rows[0].values.length > 0) {
-      const patients = rows[0].values.map(row => {
+      const patients = [];
+      for (const row of rows[0].values) {
         const patientId = row[1];
-        return {
+        patients.push({
           id: row[0],
           patient_id: patientId,
           status: row[2],
@@ -297,9 +298,9 @@ router.get('/patients', async (req, res) => {
           doctor_note: row[6] || '',
           patient_name: row[7] || '未知',
           patient_phone: row[8] || '',
-          latest_score: getLatestScore(db, patientId)
-        };
-      });
+          latest_score: await getLatestScore(db, patientId)
+        });
+      }
       return res.json({ code: 0, message: 'success', data: patients });
     }
 
@@ -328,7 +329,7 @@ router.get('/patient/data', async (req, res) => {
     const db = await getDb();
 
     // 检查 active 授权关系
-    const auth = db.exec(
+    const auth = await db.exec(
       `SELECT id, status FROM doctor_authorizations WHERE doctor_id = ? AND patient_id = ? AND status IN ('pending','active')`,
       [doctorId, patientId]
     );
@@ -343,7 +344,7 @@ router.get('/patient/data', async (req, res) => {
     }
 
     // 获取最新报告
-    const reportRes = db.exec(
+    const reportRes = await db.exec(
       `SELECT sleep_score, total_sleep_minutes, deep_sleep_minutes, light_sleep_minutes,
               rem_sleep_minutes, awake_minutes, awake_count, sleep_stages_json, noise_json
        FROM sleep_reports WHERE user_id = ? ORDER BY report_date DESC LIMIT 1`,
@@ -397,7 +398,7 @@ router.put('/note', async (req, res) => {
   try {
     const db = await getDb();
 
-    const check = db.exec(
+    const check = await db.exec(
       `SELECT id FROM doctor_authorizations WHERE patient_id = ? AND doctor_id = ? AND status = 'active'`,
       [patient_id, doctorId]
     );
@@ -408,7 +409,7 @@ router.put('/note', async (req, res) => {
 
     const authId = check[0].values[0][0];
 
-    db.run(
+    await db.run(
       `UPDATE doctor_authorizations SET doctor_note = ?, updated_at = datetime('now','localtime') WHERE id = ?`,
       [note || '', authId]
     );
@@ -437,7 +438,7 @@ router.get('/note', async (req, res) => {
   try {
     const db = await getDb();
 
-    const noteRes = db.exec(
+    const noteRes = await db.exec(
       `SELECT doctor_note FROM doctor_authorizations WHERE patient_id = ? AND doctor_id = ? AND status = 'active'`,
       [patientId, doctorId]
     );

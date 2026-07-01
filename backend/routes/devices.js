@@ -44,7 +44,7 @@ router.get('/list', async (req, res) => {
   try {
     const db = await getDb();
 
-    const result = db.exec(
+    const result = await db.exec(
       `SELECT id, serial_no, user_id, nickname, is_virtual, online_status, created_at, updated_at
        FROM devices
        WHERE user_id = ?
@@ -107,7 +107,7 @@ router.post('/add', async (req, res) => {
     const db = await getDb();
     for (let attempt = 0; attempt < 3; attempt++) {
       const candidate = generateSerialNo();
-      const exists = db.exec('SELECT 1 FROM devices WHERE serial_no = ?', [candidate]);
+      const exists = await db.exec('SELECT 1 FROM devices WHERE serial_no = ?', [candidate]);
       if (exists.length === 0 || exists[0].values.length === 0) {
         serialNo = candidate;
         break;
@@ -141,7 +141,7 @@ router.post('/add', async (req, res) => {
 
     // 2. 插入设备（is_virtual: 1虚拟 / 0真实；online_status 默认 1 在线）
     try {
-      db.run(
+      await db.run(
         `INSERT INTO devices (user_id, serial_no, nickname, is_virtual, online_status, created_at, updated_at)
          VALUES (?, ?, '我的设备', ?, 1, ?, ?)`,
         [userId, serialNo, is_virtual ? 1 : 0, now, now]
@@ -157,7 +157,7 @@ router.post('/add', async (req, res) => {
     saveDb();
 
     // 4. 查询新插入的设备
-    const result = db.exec(
+    const result = await db.exec(
       `SELECT id, serial_no, user_id, nickname, is_virtual, online_status, created_at, updated_at
        FROM devices WHERE serial_no = ?`,
       [serialNo]
@@ -205,7 +205,7 @@ router.put('/:id', async (req, res) => {
     const db = await getDb();
 
     // 1. 权限校验：验证设备属于当前用户
-    const check = db.exec('SELECT * FROM devices WHERE id = ?', [deviceId]);
+    const check = await db.exec('SELECT * FROM devices WHERE id = ?', [deviceId]);
     if (check.length === 0 || check[0].values.length === 0) {
       return res.json({ code: 1001, message: '设备不存在', data: null });
     }
@@ -217,14 +217,14 @@ router.put('/:id', async (req, res) => {
 
     // 2. 执行更新
     const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
-    db.run(
+    await db.run(
       'UPDATE devices SET nickname = ?, updated_at = ? WHERE id = ?',
       [nickname.trim(), now, deviceId]
     );
     saveDb();
 
     // 3. 返回更新后的设备
-    const updated = db.exec(
+    const updated = await db.exec(
       `SELECT id, serial_no, user_id, nickname, is_virtual, online_status, created_at, updated_at
        FROM devices WHERE id = ?`,
       [deviceId]
@@ -267,7 +267,7 @@ router.delete('/:id', async (req, res) => {
     const db = await getDb();
 
     // 1. 权限校验
-    const check = db.exec('SELECT * FROM devices WHERE id = ?', [deviceId]);
+    const check = await db.exec('SELECT * FROM devices WHERE id = ?', [deviceId]);
     if (check.length === 0 || check[0].values.length === 0) {
       return res.json({ code: 1001, message: '设备不存在', data: null });
     }
@@ -277,7 +277,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     // 2. 硬删除
-    db.run('DELETE FROM devices WHERE id = ?', [deviceId]);
+    await db.run('DELETE FROM devices WHERE id = ?', [deviceId]);
     saveDb();
 
     res.json({

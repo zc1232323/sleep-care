@@ -33,7 +33,7 @@ async function initDatabase() {
     });
   } else {
     for (const schema of ALL_SCHEMAS) {
-      db.run(schema);
+      await db.run(schema);
     }
     saveDb();
   }
