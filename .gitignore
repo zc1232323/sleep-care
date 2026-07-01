@@ -64,3 +64,4 @@ venv/
 
 # PDF temp images
 _pdf*.png
+_pdf/
