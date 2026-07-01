@@ -65,7 +65,7 @@ SHOW TABLES;
 
 ## 六、配置环境变量（切换到 MySQL）
 
-在云托管服务详情页 → 服务配置 → 环境变量，添加以下 JSON（注意：代码读取的是 `DB_HOST` 等变量，不是 `MYSQL_HOST`）：
+在云托管服务详情页 → 服务配置 → 环境变量，添加以下 JSON（代码同时支持 `DB_HOST` 和 `MYSQL_HOST` 两种前缀，任选一种即可）：
 
 ```json
 {
@@ -76,6 +76,21 @@ SHOW TABLES;
   "DB_USER": "root",
   "DB_PASSWORD": "your-password",
   "DB_NAME": "sleep_care",
+  "JWT_SECRET": "sleep-care-secret-key-2026"
+}
+```
+
+或按 PDF 讲义示例使用 MYSQL_ 前缀：
+
+```json
+{
+  "PORT": "3000",
+  "DATABASE_TYPE": "mysql",
+  "MYSQL_HOST": "your-mysql-internal-host",
+  "MYSQL_PORT": "3306",
+  "MYSQL_USER": "root",
+  "MYSQL_PASSWORD": "your-password",
+  "MYSQL_DATABASE": "sleep_care",
   "JWT_SECRET": "sleep-care-secret-key-2026"
 }
 ```
