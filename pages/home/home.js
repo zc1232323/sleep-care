@@ -77,7 +77,6 @@ Page({
               ...data,
               total_duration: totalDuration,
               deep_ratio: deepRatio,
-              // 预计算详细时长（WXML不能直接调用JS函数）
               deep_duration: this.formatMin(data.deep_sleep_minutes || 0),
               light_duration: this.formatMin(data.light_sleep_minutes || 0),
               awake_duration: this.formatMin(data.awake_minutes || 0),
@@ -176,7 +175,7 @@ Page({
     });
   },
 
-  /** 跳转到医生授权页（第9大节） */
+  /** 跳转到医生授权页（第11大节） */
   goToDoctor() {
     wx.navigateTo({
       url: '/pages/doctors/doctors'
