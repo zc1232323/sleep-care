@@ -98,15 +98,27 @@ router.post('/grant', async (req, res) => {
     }
 
     // 4. 插入授权记录
+    const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
     await db.run(
       `INSERT INTO doctor_authorizations 
-         (patient_id, doctor_id, status, expire_date, requested_at)
-       VALUES (?, ?, 'pending', ?, datetime('now','localtime'))`,
-      [userId, docId, expireDateStr]
+         (patient_id, doctor_id, status, expire_date, requested_at, created_at, updated_at)
+       VALUES (?, ?, 'pending', ?, ?, ?, ?)`,
+      [userId, docId, expireDateStr, now, now, now]
     );
 
-    const lastIdRes = await db.exec('SELECT last_insert_rowid()');
-    const newId = lastIdRes[0]?.values[0][0] || 0;
+    let newId = 0;
+    try {
+      const lastIdRes = await db.exec('SELECT LAST_INSERT_ID() AS id');
+      if (lastIdRes.length > 0 && lastIdRes[0].values.length > 0) {
+        newId = lastIdRes[0].values[0][0] || 0;
+      }
+    } catch (e) {
+      // SQLite fallback
+      const lastIdRes = await db.exec('SELECT last_insert_rowid()');
+      if (lastIdRes.length > 0 && lastIdRes[0].values.length > 0) {
+        newId = lastIdRes[0].values[0][0] || 0;
+      }
+    }
 
     saveDb();
 
@@ -191,9 +203,10 @@ router.delete('/revoke', async (req, res) => {
       return res.json({ code: 1002, message: '授权记录不存在或已被撤销', data: null });
     }
 
+    const nowRev = new Date().toISOString().replace('T', ' ').slice(0, 19);
     await db.run(
-      `UPDATE doctor_authorizations SET status = 'revoked', responded_at = datetime('now','localtime') WHERE id = ?`,
-      [authId]
+      `UPDATE doctor_authorizations SET status = 'revoked', responded_at = ?, updated_at = ? WHERE id = ?`,
+      [nowRev, nowRev, authId]
     );
     saveDb();
 
@@ -247,9 +260,10 @@ router.put('/confirm', async (req, res) => {
     const authRecordId = check[0].values[0][0];
     const targetPatientId = check[0].values[0][1];
 
+    const nowConf = new Date().toISOString().replace('T', ' ').slice(0, 19);
     await db.run(
-      `UPDATE doctor_authorizations SET status = 'active', responded_at = datetime('now','localtime') WHERE id = ?`,
-      [authRecordId]
+      `UPDATE doctor_authorizations SET status = 'active', responded_at = ?, updated_at = ? WHERE id = ?`,
+      [nowConf, nowConf, authRecordId]
     );
     saveDb();
 
@@ -409,9 +423,10 @@ router.put('/note', async (req, res) => {
 
     const authId = check[0].values[0][0];
 
+    const nowNote = new Date().toISOString().replace('T', ' ').slice(0, 19);
     await db.run(
-      `UPDATE doctor_authorizations SET doctor_note = ?, updated_at = datetime('now','localtime') WHERE id = ?`,
-      [note || '', authId]
+      `UPDATE doctor_authorizations SET doctor_note = ?, updated_at = ? WHERE id = ?`,
+      [note || '', nowNote, authId]
     );
     saveDb();
 
