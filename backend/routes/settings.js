@@ -93,9 +93,10 @@ router.put('/plan', async (req, res) => {
 
     if (existing.length > 0 && existing[0].values.length > 0) {
       // 更新
+      const nowSet = new Date().toISOString().replace('T', ' ').slice(0, 19);
       await db.run(
-        `UPDATE user_settings SET bed_time = ?, wake_time = ?, sunrise_duration_minutes = ?, updated_at = datetime('now','localtime') WHERE user_id = ?`,
-        [bed_time, wake_time, duration, userId]
+        `UPDATE user_settings SET bed_time = ?, wake_time = ?, sunrise_duration_minutes = ?, updated_at = ? WHERE user_id = ?`,
+        [bed_time, wake_time, duration, nowSet, userId]
       );
     } else {
       // 插入
