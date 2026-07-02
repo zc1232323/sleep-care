@@ -100,7 +100,13 @@ app.use('/api/doctor', doctorRoutes);      // 第9+11大节：医生授权管理
 app.use('/api/users', userRoutes);         // 第11大节：用户列表
 
 // 第11大节：Express 静态文件服务（医生端 Web 页面）
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+  }
+}));
 
 // 统一错误处理中间件（第12大节：性能优化/错误处理）
 app.use((err, req, res, next) => {
